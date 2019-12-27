@@ -1,0 +1,31 @@
+\documentclass{scrreprt}
+
+\usepackage[utf8]{inputenc}
+\usepackage{array}
+
+\newcolumntype{L}[1]{>{\raggedright\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
+
+
+\begin{document}
+
+\begin{tabular}{|L{4cm}|L{10cm}|}
+	\hline
+	\textbf{Question} & \textbf{Answer} \\
+	\hline
+	\hline
+	Is a web app too much/too less for the purpose of the Komplexpraktikum? & \\
+	\hline
+	Should we hardcode a cron job setting or should it be configurable by the user? & \\
+	\hline
+	Which patient data besides the name should be displayed inside the frontend? & \\
+	\hline
+	Should we hardcode the database settings (port, host) or make it configurable? & \\ 
+	\hline
+	Is it sufficient, when the error messages just print the stack trace? & \\
+	\hline
+	Is a password for security reasons desired? & \\
+	\hline
+
+\end{tabular}
+
+\end{document}

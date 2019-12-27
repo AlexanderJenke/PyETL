@@ -1,0 +1,37 @@
+\subsection{Requirements}
+
+\begin{itemize}
+	\item For confidential reasons, a password for using the app is required
+	\item The ETL process converts the standardized CSV files correctly into the OMOP CDM
+	\item The ETL process can be scheduled through a cron job
+	\subitem The cron job can be modified over the frontend of the app
+	\subitem A ETL process can be triggered out of schedule over the frontend
+	\item The evaluation of potential decubitus patients is aimed to be as accurate as possible for us
+	\item The results of the evaluation can be illustrated inside the frontend of the app
+	\subitem Selected additional data of the patient is illustrated
+	\subitem Additional information can be showed, if desired
+\end{itemize}
+
+\subsection{Tests}
+
+\subsubsection{ETL-Process}
+
+\begin{tabular}{|c|c|}
+	\hline
+	input & expected output \\
+	\hline
+	correct set of csv files as input & data is converted correctly \\
+	missing CSV file & error message appears \\
+	CSV file with wrong content & error message appears \\
+	\hline
+\end{tabular}
+
+\subsubsection{Evaluation of Patients}
+
+As we are using a deep learning approach, we split our data in two sets: the training data and the test data. As the names suggest, the training data is only for train our 
+network, which will then be evaluated using the test set. 
+
+\subsubsection{Frontend}
+
+Frontend tests are difficult, if not impossible. Therefore we can only test it by letting certain people evaluating it. 
+
