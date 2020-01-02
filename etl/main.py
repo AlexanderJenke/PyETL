@@ -2,8 +2,7 @@ import pandas as pd
 from sys import argv
 import os
 from Classes import Person
-
-GENDER_D = {"m": "8507", "w": "8532", "nan": "8551"}
+from Database import OMOP
 
 if __name__ == "__main__":
     csv_dir = argv[1]
@@ -20,6 +19,8 @@ if __name__ == "__main__":
     labor_csv = pd.read_csv(labor_csv, delimiter=";")
     ops_csv = pd.read_csv(ops_csv, delimiter=";")
 
+    omop = OMOP()
+
     for id in fall_pd["patienten_nummer"].unique():
         df = fall_pd[fall_pd.patienten_nummer.isin([id])]
         df = df.sort_values(by=["aufnahmedatum"])
@@ -30,7 +31,7 @@ if __name__ == "__main__":
         location["zip"] = df.plz
 
         person = Person(person_id=id,
-                        gender_concept_id=GENDER_D[last_record["geschlecht"]],
+                        gender_concept_id=omop.GENDER_LUT[last_record["geschlecht"]],
                         year_of_birth=last_record["geburtsjahr"],
                         race_concept_id="8552",  # Unknown
                         ethnicity_concept_id="38003564",  # Non-Hispanic
