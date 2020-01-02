@@ -77,3 +77,29 @@ if __name__ == "__main__":
             if domain_id == "Meas Value":
                 # Not Handled
                 raise NotImplementedError("'Meas Value' in the LABOR.csv is not supported!")
+
+        # MESSUNGEN.csv
+        messungen_df = messungen_pd[messungen_pd.kh_internes_kennzeichen.isin(internal_ids)]
+
+        for i, row in messungen_df.iterrows():
+
+            # no LOINC version given -> expecting only one concept_id -> selecting first one
+            concept_id = omop.LOINC_LUT[str(row["LOINC"])]['concept_ids'][0][0]
+            domain_id = omop.LOINC_LUT[str(row["LOINC"])]['domain_id']
+
+            if domain_id == "Measurement":
+                person.add_measurement(measurement_concept_id=str(concept_id),
+                                       measurement_date=str(row["timestamp"][:10]),
+                                       measurement_datetime=str(row["timestamp"]),
+                                       measurement_type_concept_id=str(concept_id),
+                                       value_as_number=str(row["value"]),
+                                       unit_source_value=str(row['unit']),
+                                       )
+
+            if domain_id == "Observation":
+                # Not Handled
+                raise NotImplementedError("Observation in the MESSUNGEN.csv is not supported!")
+
+            if domain_id == "Meas Value":
+                # Not Handled
+                raise NotImplementedError("'Meas Value' in the MESSUNGEN.csv is not supported!")
