@@ -121,6 +121,15 @@ class Person:
             queries += f"INSERT INTO p21_cdm.condition_occurrence({keys[:-1]}) VALUES({values[:-1]})",
 
         # visit_occurrence
-        # TODO
+        print(len(self.measurements), "Visits")  # TODO Remove later
+        for m in self.observations:
+            keys = "person_id,"
+            values = f"'{self.person['person_id']}',"
+
+            for key, value in m.items():
+                keys += f"{key},"
+                values += f"'{value}',"
+
+            queries += f"INSERT INTO p21_cdm.visit_occurrence({keys[:-1]}) VALUES({values[:-1]})",
 
         return queries
