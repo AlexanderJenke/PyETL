@@ -42,6 +42,17 @@ class ConfigHandler:
         if (len(cursor.fetchall()) == 0):
             self.conn.execute("INSERT INTO config VALUES('postgres_host', 'localhost')")
 
+        cursor = self.conn.execute("SELECT value FROM config WHERE key = 'username'")
+        if (len(cursor.fetchall()) == 0):
+            self.conn.execute("INSERT INTO config VALUES('username', 'med')")
+
+        cursor = self.conn.execute("SELECT value FROM config WHERE key = 'password'")
+        if (len(cursor.fetchall()) == 0):
+            self.conn.execute("INSERT INTO config VALUES('password', '1')")
+        
+        cursor = self.conn.execute("SELECT value FROM config WHERE key = 'csv_directory'")
+        if (len(cursor.fetchall()) == 0):
+            self.conn.execute("INSERT INTO config VALUES('csv_directory', '/home/markus/uni/medizinische Informatik/Daten/20191121')")
         self.conn.commit()
     
     def update_interval(self, interval):
@@ -56,10 +67,36 @@ class ConfigHandler:
         self.conn.commit()
 
     def get_row_count(self, csv_file):
-        cursor = self.conn.execute("SELECT row_count FROM csv_row_count WHERE csv_file = '" + csv_file + "')")
+        cursor = self.conn.execute("SELECT row_count FROM csv_row_count WHERE csv_file = '" + csv_file + "'")
         self.conn.commit()
 
     def get_interval(self):
         cursor = self.conn.execute("SELECT value FROM config WHERE key = 'interval'")
+        for value in cursor:
+            return value[0]
+
+    def get_password(self):
+        cursor = self.conn.execute("SELECT value FROM config WHERE key = 'password'")
+        for value in cursor:
+            return value[0]
+
+    def get_username(self):
+        cursor = self.conn.execute("SELECT value FROM config WHERE key = 'username'")
+        for value in cursor:
+            return value[0]
+
+    def get_host(self):
+        cursor = self.conn.execute("SELECT value FROM config WHERE key = 'postgres_host'")
+        for value in cursor:
+            return value[0]
+
+    def get_port(self):
+        cursor = self.conn.execute("SELECT value FROM config WHERE key = 'postgres_port'")
+        for value in cursor:
+            return value[0]
+
+
+    def get_csv_dir(self):
+        cursor = self.conn.execute("SELECT value FROM config WHERE key = 'csv_directory'")
         for value in cursor:
             return value[0]

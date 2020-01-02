@@ -37,7 +37,10 @@
       </li>
       <li class="nav-item">
         <a class="nav-link" href="patients">Patient Data</a>
-      </li>    
+      </li>  
+      <li class="nav-item">
+	<a class="nav-link" href="logout">Logout</a>
+      </li>
     </ul>
   </div>  
 </nav>
@@ -49,9 +52,9 @@
 			<h2>Configuration</h1>
 			<form action="cronconfig" method="GET">
 				<h4>Edit cron job configuration</h4>
-				<input class="form-control" type="text" name="interval" style="margin:5px"/>
+				<input class="form-control" type="text" name="interval" value="{{interval}}" placeholder="example: * * * * *"  style="margin:5px"/>
 				<p/>
-				<input class="btn btn-primary" type="submit" value="OK!"/>
+				<input class="btn btn-primary" type="submit" value="Submit"/>
 			</form>
 			<p/>
 
@@ -59,6 +62,18 @@
 				<h4>Run ETL job manually</h2>
 			<p/>
 				<input class="btn btn-primary" type= "submit" value="Run!"/>
+			</form>	
+			<form action="dbconfig" method="GET">
+				<h4>Edit database configuration</h4>
+				<input class="form-control" type="text" name="host" value="{{host}}" placeholder="db host" style="margin:5px"/>
+				<input class="form-control" type="text" name="port" value="{{port}}" placeholder="db port" style="margin:5px"/>
+				<p/>
+				<input class="btn btn-primary" type="submit" value="Submit"/>
+			</form>
+			<form action="csvdirconfig">
+				<h4>CSV location</h4>
+				<input class="form-control" type="text" name="dir" value="{{location}}" placeholder="directory of csv files" style="margin:5px">
+				<input class="btn btn-primary" type="submit" value="Submit"/>
 			</form>
 		</div>
 		
