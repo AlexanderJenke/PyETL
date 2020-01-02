@@ -45,7 +45,10 @@ if __name__ == "__main__":
             person.add_visit(visit_concept_id="???",  # TODO
                              visit_start_date=str(row["aufnahmedatum"][:10]),
                              visit_end_date=str(row["entlassungsdatum"][:10]),
-                             visit_type_concept_id="???",  # TODO
+                             visit_type_concept_id="32023",  # TODO 'Visit derived from encounter on medical facility claim', ok?
+                             visit_source_value=str(row['aufnahmeanlass']),
+                             admitting_source_value=str(row['aufnahmegrund']),
+                             discarge_to_source_value=str(row['entlassungsgrund']),
                              )
 
         internal_ids = [key for key in fall_df["kh_internes_kennzeichen"]]  # associated internal ids
