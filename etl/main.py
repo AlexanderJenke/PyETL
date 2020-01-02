@@ -26,7 +26,7 @@ if __name__ == "__main__":
     # add one patient after another
     for id in fall_pd["patienten_nummer"].unique():
 
-        #  FALL.csv
+        #  FALL.csv ----------------------------------------------------------------------------------------------------
         fall_df = fall_pd[fall_pd.patienten_nummer.isin([id])]
         fall_df = fall_df.sort_values(by=["aufnahmedatum"])
         last_record = fall_df.iloc[-1]
@@ -41,9 +41,16 @@ if __name__ == "__main__":
                         location=location,
                         )
 
+        for i, row in fall_df.iterrows():
+            person.add_visit(visit_concept_id="???",  # TODO
+                             visit_start_date=str(row["aufnahmedatum"][:10]),
+                             visit_end_date=str(row["entlassungsdatum"][:10]),
+                             visit_type_concept_id="???",  # TODO
+                             )
+
         internal_ids = [key for key in fall_df["kh_internes_kennzeichen"]]  # associated internal ids
 
-        # LABOR.csv
+        # LABOR.csv ----------------------------------------------------------------------------------------------------
         labor_df = labor_pd[labor_pd.kh_internes_kennzeichen.isin(internal_ids)]
 
         for i, row in labor_df.iterrows():
@@ -64,8 +71,10 @@ if __name__ == "__main__":
                 person.add_measurement(measurement_concept_id=str(concept_id),
                                        measurement_date=str(row["timestamp"][:10]),
                                        measurement_datetime=str(row["timestamp"]),
-                                       measurement_type_concept_id=str(concept_id),
+                                       measurement_type_concept_id="44818702",  # TODO 'Lab Result', ok?
                                        value_as_number=str(row["value"]),
+                                       measurement_source_concept_id=str(concept_id),
+                                       measurement_source_value=str(row["LOINC"]),
                                        unit_source_value=str(row['unit']),
                                        **optional
                                        )
@@ -78,7 +87,7 @@ if __name__ == "__main__":
                 # Not Handled
                 raise NotImplementedError("'Meas Value' in the LABOR.csv is not supported!")
 
-        # MESSUNGEN.csv
+        # MESSUNGEN.csv ------------------------------------------------------------------------------------------------
         messungen_df = messungen_pd[messungen_pd.kh_internes_kennzeichen.isin(internal_ids)]
 
         for i, row in messungen_df.iterrows():
@@ -91,7 +100,9 @@ if __name__ == "__main__":
                 person.add_measurement(measurement_concept_id=str(concept_id),
                                        measurement_date=str(row["timestamp"][:10]),
                                        measurement_datetime=str(row["timestamp"]),
-                                       measurement_type_concept_id=str(concept_id),
+                                       measurement_type_concept_id="44818701",  # TODO 'From physical examination', ok?
+                                       measurement_source_concept_id=str(concept_id),
+                                       measurement_source_value=str(row["LOINC"]),
                                        value_as_number=str(row["value"]),
                                        unit_source_value=str(row['unit']),
                                        )
@@ -104,7 +115,63 @@ if __name__ == "__main__":
                 # Not Handled
                 raise NotImplementedError("'Meas Value' in the MESSUNGEN.csv is not supported!")
 
-        # insert into database
+        # ICD.csv ------------------------------------------------------------------------------------------------------
+        icd_df = icd_pd[icd_pd.kh_internes_kennzeichen.isin(internal_ids)]
+
+        for i, row in icd_df.iterrows():
+
+            icd_version = int(row['icd_version'])
+            domain_id = omop.ICD10GM_LUT[str(row["icd_kode"])]['domain_id']
+
+            # get correct concept_id according to icd_version
+            concept_id = None
+            for id, start, end in omop.ICD10GM_LUT[str(row['icd_kode'])]['concept_ids']:
+                if end.year >= icd_version >= start.year:
+                    concept_id = id
+            assert (concept_id is not None)
+
+            if domain_id == "Observation":
+                print(row["icd_kode"], row['diagnoseart'])
+
+                # adding optional information if given
+                optional = {}
+                if str(row["diagnosensicherheit"]) != "nan":
+                    optional['qualifier_source_value'] = str(row["diagnosensicherheit"])
+                # TODO was ist mit lokalisation & sekundaer_kode
+
+                person.add_observation(observation_concept_id=str(omop.ICD10GM2SNOMED[concept_id]),
+                                       observation_date="???",  # TODO date ist requiered abder nicht angegeben
+                                       observation_type_concept_id="???",  # TODO welche type concept id?
+                                       observation_source_concept_id=str(concept_id),
+                                       observation_source_value=str(row['icd_kode']),
+                                       **optional
+                                       )
+
+            if domain_id == "Condition":
+                # TODO was ist mit diagnosensicherheit, lokalisation & sekundaer_kode
+
+                person.add_condition(condition_concept_id=str(omop.ICD10GM2SNOMED[concept_id]),
+                                     condition_start_date="???",  # TODO date ist requiered abder nicht angegeben
+                                     condition_type_concept_id=omop.CONDITION_TYPE_LUT[str(row['diagnoseart'])],
+                                     condition_source_concept_id=str(concept_id),
+                                     condition_source_value=str(row['icd_kode']),
+
+                                     )
+
+            if domain_id == "Measurement":
+                # Not Handled
+                raise NotImplementedError("'Measurement' in the ICD.csv is not supported!")
+
+            if domain_id == "Procedure":
+                # Not Handled
+                raise NotImplementedError("Procedure in the ICD.csv is not supported!")
+
+        continue
+        # OPS.csv ------------------------------------------------------------------------------------------------------
+        # TODO
+
+
+        # insert into database -----------------------------------------------------------------------------------------
         res = person.insert_into_db()
         for sql in res:
             print(sql)
