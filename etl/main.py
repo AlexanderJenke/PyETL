@@ -24,14 +24,11 @@ if __name__ == "__main__":
         df = fall_pd[fall_pd.patienten_nummer.isin([id])]
         df = df.sort_values(by=["aufnahmedatum"])
         last_record = df.iloc[-1]
-
-        location = {}
-        location["city"] = df.wohnort
-        location["zip"] = df.plz
-
+        location = {"city": df.wohnort, "zip": df.plz}
         person = Person(person_id=id,
                         gender_concept_id=GENDER_D[last_record["geschlecht"]],
                         year_of_birth=last_record["geburtsjahr"],
+                        month_of_birth=last_record["geburtsmonat"],
                         race_concept_id="8552",  # Unknown
                         ethnicity_concept_id="38003564",  # Non-Hispanic
                         location_id=location,
