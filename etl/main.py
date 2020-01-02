@@ -103,3 +103,9 @@ if __name__ == "__main__":
             if domain_id == "Meas Value":
                 # Not Handled
                 raise NotImplementedError("'Meas Value' in the MESSUNGEN.csv is not supported!")
+
+        # insert into database
+        res = person.insert_into_db()
+        for sql in res:
+            print(sql)
+            omop.insert(sql)
