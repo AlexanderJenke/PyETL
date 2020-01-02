@@ -33,3 +33,12 @@ if __name__ == "__main__":
                         ethnicity_concept_id="38003564",  # Non-Hispanic
                         location_id=location,
                         )
+        measurements = []
+        kennzeichen_list = [k for k in df["kh_internes_kennzeichen"]]
+        print(kennzeichen_list)
+        df = labor_csv[labor_csv.kh_internes_kennzeichen.isin(kennzeichen_list)]
+        #print(df)
+        measurements = []
+        for i, row in df.iterrows(): 
+            measurements.pushback({})
+        #person.add_measurements() 
