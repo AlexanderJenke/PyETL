@@ -6,12 +6,15 @@ import os
 
 handler = ConfigHandler()
 
+def insert_into_FALL(csv):
+    frame = read_csv(csv)
+
+
 def get_row_count_from_csv(csv):
-    df = read_csv(csv)
+    df = read_csv(csv, delimiter=";")
     return len(df)
 
 def run_etl_process(csv_files):
-
     csv_is_updataed = False
     for csv in csv_files:
         print(csv)
@@ -24,6 +27,9 @@ def run_etl_process(csv_files):
         print("CSV files were not changed!")
         return
     print("Now, the ETL process should start")
+    fr csv in csv_files:
+        if csv.endswith("FALL.csv"):
+            insert_into_FALL(csv)
     
 
 if __name__ == "__main__":
