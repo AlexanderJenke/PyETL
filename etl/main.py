@@ -21,7 +21,7 @@ if __name__ == "__main__":
     ops_pd = pd.read_csv(ops_csv, delimiter=";")
 
     # init database connector
-    omop = OMOP()
+    omop = OMOP(do_commits=False)  # TODO Activate commits
 
     # add one patient after another
     for id in fall_pd["patienten_nummer"].unique():

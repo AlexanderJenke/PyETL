@@ -2,7 +2,8 @@ import psycopg2 as db
 
 
 class OMOP:
-    def __init__(self, dbname='OHDSI', user='ohdsi_admin_user', host='localhost', password='omop'):
+    def __init__(self, dbname='OHDSI', user='ohdsi_admin_user', host='localhost', password='omop', do_commits=True):
+        self.do_commits = do_commits
         self.conn = db.connect(f"dbname='{dbname}' user='{user}' host='{host}' password='{password}'")
         self.cursor = self.conn.cursor()
         self.preload_lut()
@@ -14,7 +15,8 @@ class OMOP:
 
     def insert(self, sql: str):
         self.cursor.execute(sql)
-        # self.conn.commit()  # TODO deactivated for debugging
+        if self.do_commits:
+            self.conn.commit()
 
     def preload_lut(self):
         """Preloads Look-up Tables for ICD10GM-, OPS- and LOINC-code -> concept_id
