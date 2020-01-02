@@ -40,3 +40,40 @@ if __name__ == "__main__":
                         ethnicity_concept_id="38003564",  # Non-Hispanic
                         location=location,
                         )
+
+        internal_ids = [key for key in fall_df["kh_internes_kennzeichen"]]  # associated internal ids
+
+        # LABOR.csv
+        labor_df = labor_pd[labor_pd.kh_internes_kennzeichen.isin(internal_ids)]
+
+        for i, row in labor_df.iterrows():
+
+            # no LOINC version given -> expecting only one concept_id -> selecting first one
+            concept_id = omop.LOINC_LUT[str(row["LOINC"])]['concept_ids'][0][0]
+            domain_id = omop.LOINC_LUT[str(row["LOINC"])]['domain_id']
+
+            if domain_id == "Measurement":
+
+                # adding optional information if given
+                optional = {}
+                if str(row["low"]) != "nan":
+                    optional['range_low'] = str(row["low"])
+                if str(row["high"]) != "nan":
+                    optional['range_high'] = str(row["high"])
+
+                person.add_measurement(measurement_concept_id=str(concept_id),
+                                       measurement_date=str(row["timestamp"][:10]),
+                                       measurement_datetime=str(row["timestamp"]),
+                                       measurement_type_concept_id=str(concept_id),
+                                       value_as_number=str(row["value"]),
+                                       unit_source_value=str(row['unit']),
+                                       **optional
+                                       )
+
+            if domain_id == "Observation":
+                # Not Handled
+                raise NotImplementedError("'Observation' in the LABOR.csv is not supported!")
+
+            if domain_id == "Meas Value":
+                # Not Handled
+                raise NotImplementedError("'Meas Value' in the LABOR.csv is not supported!")
