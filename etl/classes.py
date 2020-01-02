@@ -1,4 +1,4 @@
-class Patient:
+class Person:
     
     def __init__(self, **meta_d):
         self.meta_d = meta_d
