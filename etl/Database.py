@@ -8,6 +8,7 @@ class OMOP:
         self.cursor = self.conn.cursor()
         self.preload_lut()
         self.GENDER_LUT = {"m": "8507", "w": "8532", "nan": "8551"}
+        self.CONDITION_TYPE_LUT = {"ND": "44786629", "HD": "44786627"}
 
     def select(self, sql: str):
         self.cursor.execute(sql)
