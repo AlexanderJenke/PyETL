@@ -7,6 +7,7 @@ class Person:
         self.conditions = []  # -> table: condition_occurrence
 
     def add_visit(self,
+                  visit_occurrence_id,
                   visit_concept_id,
                   visit_start_date,
                   visit_end_date,
@@ -16,7 +17,8 @@ class Person:
         # Optional Values
         visit_d = {key: value for key, value in kwargs.items()}
 
-        # Required Values (Except visit_id & person_id)
+        # Required Values (Except person_id)
+        visit_d["visit_occurrence_id"] = visit_occurrence_id
         visit_d["visit_concept_id"] = visit_concept_id
         visit_d["visit_start_date"] = visit_start_date
         visit_d["visit_end_date"] = visit_end_date
@@ -59,6 +61,7 @@ class Person:
     def add_condition(self,
                         condition_concept_id,
                         condition_start_date,
+                        condition_start_datetime,
                         condition_type_concept_id,
                         **kwargs):
 
@@ -68,6 +71,7 @@ class Person:
         # Required Values (Except condition_id & person_id)
         condition_d["condition_concept_id"] = condition_concept_id
         condition_d["condition_start_date"] = condition_start_date
+        condition_d["condition_start_datetime"] = condition_start_datetime
         condition_d["condition_type_concept_id"] = condition_type_concept_id
 
         self.conditions.append(condition_d)
@@ -85,7 +89,7 @@ class Person:
         queries += f"INSERT INTO p21_cdm.person ({keys[:-1]}) VALUES({values[:-1]})",
 
         # measurement
-        print(len(self.measurements), "Measurements")  # TODO Remove later
+        # print(len(self.measurements), "Measurements")  # TODO Remove later
         for m in self.measurements:
             keys = "person_id,"
             values = f"'{self.person['person_id']}',"
@@ -97,7 +101,7 @@ class Person:
             queries += f"INSERT INTO p21_cdm.measurement({keys[:-1]}) VALUES({values[:-1]})",
 
         # observation
-        print(len(self.measurements), "Observations")  # TODO Remove later
+        # print(len(self.observations), "Observations")  # TODO Remove later
         for m in self.observations:
             keys = "person_id,"
             values = f"'{self.person['person_id']}',"
@@ -109,8 +113,8 @@ class Person:
             queries += f"INSERT INTO p21_cdm.observation({keys[:-1]}) VALUES({values[:-1]})",
 
         # condition_occurence
-        print(len(self.measurements), "Conditions")  # TODO Remove later
-        for m in self.observations:
+        # print(len(self.conditions), "Conditions")  # TODO Remove later
+        for m in self.conditions:
             keys = "person_id,"
             values = f"'{self.person['person_id']}',"
 
@@ -121,8 +125,8 @@ class Person:
             queries += f"INSERT INTO p21_cdm.condition_occurrence({keys[:-1]}) VALUES({values[:-1]})",
 
         # visit_occurrence
-        print(len(self.measurements), "Visits")  # TODO Remove later
-        for m in self.observations:
+        # print(len(self.visits), "Visits")  # TODO Remove later
+        for m in self.visits:
             keys = "person_id,"
             values = f"'{self.person['person_id']}',"
 
