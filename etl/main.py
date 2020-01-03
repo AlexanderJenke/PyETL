@@ -42,13 +42,14 @@ if __name__ == "__main__":
                         )
 
         for i, row in fall_df.iterrows():
-            person.add_visit(visit_concept_id="???",  # TODO
-                             visit_start_date=str(row["aufnahmedatum"][:10]),
-                             visit_end_date=str(row["entlassungsdatum"][:10]),
+            person.add_visit(visit_occurrence_id=str(row['kh_internes_kennzeichen']),
+                             visit_concept_id="0000",  # TODO
+                             visit_start_date=str(row["aufnahmedatum"])[:8],
+                             visit_end_date=str(row["entlassungsdatum"])[:8],
                              visit_type_concept_id="32023",  # TODO 'Visit derived from encounter on medical facility claim', ok?
                              visit_source_value=str(row['aufnahmeanlass']),
                              admitting_source_value=str(row['aufnahmegrund']),
-                             discarge_to_source_value=str(row['entlassungsgrund']),
+                             discharge_to_source_value=str(row['entlassungsgrund']),
                              )
 
         internal_ids = [key for key in fall_df["kh_internes_kennzeichen"]]  # associated internal ids
@@ -134,7 +135,6 @@ if __name__ == "__main__":
             assert (concept_id is not None)
 
             if domain_id == "Observation":
-                print(row["icd_kode"], row['diagnoseart'])
 
                 # adding optional information if given
                 optional = {}
@@ -143,8 +143,8 @@ if __name__ == "__main__":
                 # TODO was ist mit lokalisation & sekundaer_kode
 
                 person.add_observation(observation_concept_id=str(omop.ICD10GM2SNOMED[concept_id]),
-                                       observation_date="???",  # TODO date ist requiered abder nicht angegeben
-                                       observation_type_concept_id="???",  # TODO welche type concept id?
+                                       observation_date="1999-01-01",  # TODO date ist requiered abder nicht angegeben
+                                       observation_type_concept_id="0000",  # TODO welche type concept id?
                                        observation_source_concept_id=str(concept_id),
                                        observation_source_value=str(row['icd_kode']),
                                        **optional
@@ -154,7 +154,8 @@ if __name__ == "__main__":
                 # TODO was ist mit diagnosensicherheit, lokalisation & sekundaer_kode
 
                 person.add_condition(condition_concept_id=str(omop.ICD10GM2SNOMED[concept_id]),
-                                     condition_start_date="???",  # TODO date ist requiered abder nicht angegeben
+                                     condition_start_date="1999-01-01",  # TODO date ist requiered abder nicht angegeben
+                                     condition_start_datetime="1999-01-01 00:00:00",  # TODO date ist requiered abder nicht angegeben
                                      condition_type_concept_id=omop.CONDITION_TYPE_LUT[str(row['diagnoseart'])],
                                      condition_source_concept_id=str(concept_id),
                                      condition_source_value=str(row['icd_kode']),
@@ -167,12 +168,10 @@ if __name__ == "__main__":
 
             if domain_id == "Procedure":
                 # Not Handled
-                raise NotImplementedError("Procedure in the ICD.csv is not supported!")
+                raise NotImplementedError("'Procedure' in the ICD.csv is not supported!")
 
-        continue
         # OPS.csv ------------------------------------------------------------------------------------------------------
         # TODO
-
 
         # insert into database -----------------------------------------------------------------------------------------
         res = person.insert_into_db()
