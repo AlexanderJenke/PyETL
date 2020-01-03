@@ -4,6 +4,8 @@ import os
 from Classes import Person
 from Database import OMOP
 
+from tqdm import tqdm
+
 if __name__ == "__main__":
     csv_dir = argv[1]  # Path to csv files
 
@@ -24,7 +26,7 @@ if __name__ == "__main__":
     omop = OMOP(do_commits=False)  # TODO Activate commits
 
     # add one patient after another
-    for id in fall_pd["patienten_nummer"].unique():
+    for id in tqdm(fall_pd["patienten_nummer"].unique()):
 
         #  FALL.csv ----------------------------------------------------------------------------------------------------
         fall_df = fall_pd[fall_pd.patienten_nummer.isin([id])]
