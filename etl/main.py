@@ -177,5 +177,7 @@ if __name__ == "__main__":
         # insert into database -----------------------------------------------------------------------------------------
         res = person.insert_into_db()
         for sql in res:
-            print(sql)
+            pass
+            #print(sql)
             omop.insert(sql)
+        # omop.commit()  # TODO enable commit of whole person

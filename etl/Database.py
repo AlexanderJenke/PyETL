@@ -19,6 +19,9 @@ class OMOP:
         if self.do_commits:
             self.conn.commit()
 
+    def commit(self):
+        self.conn.commit()
+
     def preload_lut(self):
         """Preloads Look-up Tables for ICD10GM-, OPS- and LOINC-code -> concept_id
         """
