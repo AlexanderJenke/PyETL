@@ -43,6 +43,17 @@ def run_cron_job():
     cron_job.create_cron_job(interval)
     return redirect(url_for("config_page"))
 
+@app.route("/patients", methods = ["GET"])
+def patient_page():
+    data = {}
+    data["22"] = ("50", "z", True, ["lies too long", "uses Pentaho"])
+    data["23"] = ("51", "z", True, ["too old", "uses Pentaho"])
+    data["24"] = ("11", "z", False, [])
+    data["25"] = ("2", "z", False, [])
+    data["26"] = ("4", "z", False, [])
+    print(data)
+    return render_template("patient.html", data=data)
+
 @app.route("/cronconfig", methods= ["GET"])
 def cron_config():
     new_interval = request.args.get("interval")
