@@ -179,7 +179,38 @@ if __name__ == "__main__":
                 raise NotImplementedError(f"'{domain_id}' in the ICD.csv is not supported!")
 
         # OPS.csv ------------------------------------------------------------------------------------------------------
-        # TODO
+        ops_df = ops_pd[ops_pd.kh_internes_kennzeichen.isin(internal_ids)]
+
+        for i, row in ops_df.iterrows():
+
+            ops_version = int(row['ops_version'])
+            domain_id = omop.OPS_LUT[str(row["ops_kode"])]['domain_id']
+
+            # get correct concept_id according to ops_version
+            concept_id = None
+            for id, start, end in omop.OPS_LUT[str(row["ops_kode"])]['concept_ids']:
+                if end.year >= ops_version >= start.year:
+                    concept_id = id
+            assert (concept_id is not None)
+
+            if domain_id == "Procedure":
+                pass
+                # TODO
+
+            elif domain_id == "Observation":
+                # Not Handled
+                raise NotImplementedError("'Observation' in the OPS.csv is not supported!")
+
+            elif domain_id == "Condition":
+                # Not Handled
+                raise NotImplementedError("'Condition' in the OPS.csv is not supported!")
+
+            elif domain_id == "Measurement":
+                # Not Handled
+                raise NotImplementedError("'Measurement' in the OPS.csv is not supported!")
+
+            else:
+                raise NotImplementedError(f"'{domain_id}' in the OPS.csv is not supported!")
 
         # insert into database -----------------------------------------------------------------------------------------
         res = person.insert_into_db()
