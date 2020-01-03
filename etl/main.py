@@ -85,13 +85,15 @@ if __name__ == "__main__":
                                        **optional
                                        )
 
-            if domain_id == "Observation":
+            elif domain_id == "Observation":
                 # Not Handled
                 raise NotImplementedError("'Observation' in the LABOR.csv is not supported!")
 
-            if domain_id == "Meas Value":
+            elif domain_id == "Meas Value":
                 # Not Handled
                 raise NotImplementedError("'Meas Value' in the LABOR.csv is not supported!")
+            else:
+                raise NotImplementedError(f"'{domain_id}' in the LABOR.csv is not supported!")
 
         # MESSUNGEN.csv ------------------------------------------------------------------------------------------------
         messungen_df = messungen_pd[messungen_pd.kh_internes_kennzeichen.isin(internal_ids)]
@@ -113,13 +115,15 @@ if __name__ == "__main__":
                                        unit_source_value=str(row['unit']),
                                        )
 
-            if domain_id == "Observation":
+            elif domain_id == "Observation":
                 # Not Handled
                 raise NotImplementedError("Observation in the MESSUNGEN.csv is not supported!")
 
-            if domain_id == "Meas Value":
+            elif domain_id == "Meas Value":
                 # Not Handled
                 raise NotImplementedError("'Meas Value' in the MESSUNGEN.csv is not supported!")
+            else:
+                raise NotImplementedError(f"'{domain_id}' in the MESSUNGEN.csv is not supported!")
 
         # ICD.csv ------------------------------------------------------------------------------------------------------
         icd_df = icd_pd[icd_pd.kh_internes_kennzeichen.isin(internal_ids)]
@@ -152,7 +156,7 @@ if __name__ == "__main__":
                                        **optional
                                        )
 
-            if domain_id == "Condition":
+            elif domain_id == "Condition":
                 # TODO was ist mit diagnosensicherheit, lokalisation & sekundaer_kode
 
                 person.add_condition(condition_concept_id=str(omop.ICD10GM2SNOMED[concept_id]),
@@ -164,13 +168,15 @@ if __name__ == "__main__":
 
                                      )
 
-            if domain_id == "Measurement":
+            elif domain_id == "Measurement":
                 # Not Handled
                 raise NotImplementedError("'Measurement' in the ICD.csv is not supported!")
 
-            if domain_id == "Procedure":
+            elif domain_id == "Procedure":
                 # Not Handled
                 raise NotImplementedError("'Procedure' in the ICD.csv is not supported!")
+            else:
+                raise NotImplementedError(f"'{domain_id}' in the ICD.csv is not supported!")
 
         # OPS.csv ------------------------------------------------------------------------------------------------------
         # TODO
@@ -179,6 +185,6 @@ if __name__ == "__main__":
         res = person.insert_into_db()
         for sql in res:
             pass
-            #print(sql)
+            # print(sql)
             omop.insert(sql)
         # omop.commit()  # TODO enable commit of whole person
