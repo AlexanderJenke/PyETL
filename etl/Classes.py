@@ -5,6 +5,7 @@ class Person:
         self.measurements = []  # -> table: measurement
         self.observations = []  # -> table: observation
         self.conditions = []  # -> table: condition_occurrence
+        self.procedures = []  # -> table: procedure_occurrence
 
     def add_visit(self,
                   visit_occurrence_id,
@@ -76,6 +77,21 @@ class Person:
 
         self.conditions.append(condition_d)
 
+    def add_procedure(self,
+                      procedure_concept_id,
+                      procedure_date,
+                      procedure_type_concept_id,
+                      **kwargs):
+        # Optional Values
+        procedure_d = {key: value for key, value in kwargs.items()}
+
+        # Required Values (Except procedure_id & person_id)
+        procedure_d["procedure_concept_id"] = procedure_concept_id
+        procedure_d["procedure_date"] = procedure_date
+        procedure_d["procedure_type_concept_id"] = procedure_type_concept_id
+
+        self.procedures.append(procedure_d)
+
     def insert_into_db(self):
         queries = ()
 
@@ -87,6 +103,7 @@ class Person:
             keys += f"{key},"
             values += f"'{value}',"
         queries += f"INSERT INTO p21_cdm.person ({keys[:-1]}) VALUES({values[:-1]})",
+        # TODO Add location
 
         # measurement
         # print(len(self.measurements), "Measurements")  # TODO Remove later
@@ -123,6 +140,18 @@ class Person:
                 values += f"'{value}',"
 
             queries += f"INSERT INTO p21_cdm.condition_occurrence({keys[:-1]}) VALUES({values[:-1]})",
+
+        # procedure_occurence
+        # print(len(self.procedures), "Procedures")  # TODO Remove later
+        for m in self.procedures:
+            keys = "person_id,"
+            values = f"'{self.person['person_id']}',"
+
+            for key, value in m.items():
+                keys += f"{key},"
+                values += f"'{value}',"
+
+            queries += f"INSERT INTO p21_cdm.procedure_occurrence({keys[:-1]}) VALUES({values[:-1]})",
 
         # visit_occurrence
         # print(len(self.visits), "Visits")  # TODO Remove later
