@@ -5,6 +5,7 @@ from Classes import Person
 from Database import OMOP
 
 from tqdm import tqdm
+from sys import stderr
 
 if __name__ == "__main__":
     csv_dir = argv[1]  # Path to csv files
@@ -48,7 +49,8 @@ if __name__ == "__main__":
                              visit_concept_id="0000",  # TODO
                              visit_start_date=str(row["aufnahmedatum"])[:8],
                              visit_end_date=str(row["entlassungsdatum"])[:8],
-                             visit_type_concept_id="32023",  # TODO 'Visit derived from encounter on medical facility claim', ok?
+                             visit_type_concept_id="32023",
+                             # TODO 'Visit derived from encounter on medical facility claim', ok?
                              visit_source_value=str(row['aufnahmeanlass']),
                              admitting_source_value=str(row['aufnahmegrund']),
                              discharge_to_source_value=str(row['entlassungsgrund']),
@@ -62,8 +64,9 @@ if __name__ == "__main__":
         for i, row in labor_df.iterrows():
 
             # no LOINC version given -> expecting only one concept_id -> selecting first one
-            concept_id = omop.LOINC_LUT[str(row["LOINC"])]['concept_ids'][0][0]
-            domain_id = omop.LOINC_LUT[str(row["LOINC"])]['domain_id']
+            concept_id = omop.get_valid_concept_id(LUT=omop.LOINC_LUT,
+                                                   code=str(row['LOINC']))
+            domain_id = omop.LOINC_LUT.get(str(row["LOINC"]))['domain_id']
 
             if domain_id == "Measurement":
 
@@ -75,7 +78,7 @@ if __name__ == "__main__":
                     optional['range_high'] = str(row["high"])
 
                 person.add_measurement(measurement_concept_id=str(concept_id),
-                                       measurement_date=str(row["timestamp"][:10]),
+                                       measurement_date=str(row["timestamp"])[:10],
                                        measurement_datetime=str(row["timestamp"]),
                                        measurement_type_concept_id="44818702",  # TODO 'Lab Result', ok?
                                        value_as_number=str(row["value"]),
@@ -92,6 +95,10 @@ if __name__ == "__main__":
             elif domain_id == "Meas Value":
                 # Not Handled
                 raise NotImplementedError("'Meas Value' in the LABOR.csv is not supported!")
+
+            elif domain_id == "KeyNotFound":
+                print(f"WARNING: Skipping row in LABOR.csv! \n{row}", file=stderr)
+
             else:
                 raise NotImplementedError(f"'{domain_id}' in the LABOR.csv is not supported!")
 
@@ -101,12 +108,13 @@ if __name__ == "__main__":
         for i, row in messungen_df.iterrows():
 
             # no LOINC version given -> expecting only one concept_id -> selecting first one
-            concept_id = omop.LOINC_LUT[str(row["LOINC"])]['concept_ids'][0][0]
-            domain_id = omop.LOINC_LUT[str(row["LOINC"])]['domain_id']
+            concept_id = omop.get_valid_concept_id(LUT=omop.LOINC_LUT,
+                                                   code=str(row['LOINC']))
+            domain_id = omop.LOINC_LUT.get(str(row["LOINC"]))['domain_id']
 
             if domain_id == "Measurement":
                 person.add_measurement(measurement_concept_id=str(concept_id),
-                                       measurement_date=str(row["timestamp"][:10]),
+                                       measurement_date=str(row["timestamp"])[:10],
                                        measurement_datetime=str(row["timestamp"]),
                                        measurement_type_concept_id="44818701",  # TODO 'From physical examination', ok?
                                        measurement_source_concept_id=str(concept_id),
@@ -122,6 +130,10 @@ if __name__ == "__main__":
             elif domain_id == "Meas Value":
                 # Not Handled
                 raise NotImplementedError("'Meas Value' in the MESSUNGEN.csv is not supported!")
+
+            elif domain_id == "KeyNotFound":
+                print(f"WARNING: Skipping row in MESSUNGEN.csv! \n{row}", file=stderr)
+
             else:
                 raise NotImplementedError(f"'{domain_id}' in the MESSUNGEN.csv is not supported!")
 
@@ -131,14 +143,12 @@ if __name__ == "__main__":
         for i, row in icd_df.iterrows():
 
             icd_version = int(row['icd_version'])
-            domain_id = omop.ICD10GM_LUT[str(row["icd_kode"])]['domain_id']
+            domain_id = omop.ICD10GM_LUT.get(str(row["icd_kode"]))['domain_id']
 
             # get correct concept_id according to icd_version
-            concept_id = None
-            for id, start, end in omop.ICD10GM_LUT[str(row['icd_kode'])]['concept_ids']:
-                if end.year >= icd_version >= start.year:
-                    concept_id = id
-            assert (concept_id is not None)
+            concept_id = omop.get_valid_concept_id(LUT=omop.ICD10GM_LUT,
+                                                   code=str(row['icd_kode']),
+                                                   code_version=icd_version)
 
             if domain_id == "Observation":
 
@@ -161,8 +171,9 @@ if __name__ == "__main__":
 
                 person.add_condition(condition_concept_id=str(omop.ICD10GM2SNOMED[concept_id]),
                                      condition_start_date="1999-01-01",  # TODO date ist requiered abder nicht angegeben
-                                     condition_start_datetime="1999-01-01 00:00:00",  # TODO date ist requiered abder nicht angegeben
-                                     condition_type_concept_id=omop.CONDITION_TYPE_LUT[str(row['diagnoseart'])],
+                                     condition_start_datetime="1999-01-01 00:00:00",
+                                     # TODO date ist requiered abder nicht angegeben
+                                     condition_type_concept_id=omop.CONDITION_TYPE_LUT.get(str(row['diagnoseart'])),
                                      condition_source_concept_id=str(concept_id),
                                      condition_source_value=str(row['icd_kode']),
 
@@ -175,6 +186,10 @@ if __name__ == "__main__":
             elif domain_id == "Procedure":
                 # Not Handled
                 raise NotImplementedError("'Procedure' in the ICD.csv is not supported!")
+
+            elif domain_id == "KeyNotFound":
+                print(f"WARNING: Skipping row in ICD.csv! \n{row}", file=stderr)
+
             else:
                 raise NotImplementedError(f"'{domain_id}' in the ICD.csv is not supported!")
 
@@ -184,18 +199,23 @@ if __name__ == "__main__":
         for i, row in ops_df.iterrows():
 
             ops_version = int(row['ops_version'])
-            domain_id = omop.OPS_LUT[str(row["ops_kode"])]['domain_id']
+
+            domain_id = omop.OPS_LUT.get(str(row["ops_kode"]))['domain_id']
 
             # get correct concept_id according to ops_version
-            concept_id = None
-            for id, start, end in omop.OPS_LUT[str(row["ops_kode"])]['concept_ids']:
-                if end.year >= ops_version >= start.year:
-                    concept_id = id
-            assert (concept_id is not None)
+            concept_id = omop.get_valid_concept_id(LUT=omop.OPS_LUT,
+                                                   code=str(row['ops_kode']),
+                                                   code_version=ops_version)
 
             if domain_id == "Procedure":
-                pass
-                # TODO
+                person.add_procedure(procedure_concept_id=-1,  # TODO Transpate OPS -> Standart Vocabulary
+                                     procedure_date=str(row["ops_datum"])[:8],
+                                     procedure_datetime=str(row["ops_datum"])[:8],
+                                     procedure_type_concept_id="0000",  # TODO welche type concept id?
+                                     procedure_source_value=str(row['ops_kode']),
+                                     procedure_source_concept_id=str(concept_id),
+                                     # TODO how to add 'lokalisation'?
+                                     )
 
             elif domain_id == "Observation":
                 # Not Handled
@@ -208,6 +228,9 @@ if __name__ == "__main__":
             elif domain_id == "Measurement":
                 # Not Handled
                 raise NotImplementedError("'Measurement' in the OPS.csv is not supported!")
+
+            elif domain_id == "KeyNotFound":
+                print(f"WARNING: Skipping row in OPS.csv! \n{row}", file=stderr)
 
             else:
                 raise NotImplementedError(f"'{domain_id}' in the OPS.csv is not supported!")
