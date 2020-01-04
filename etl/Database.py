@@ -94,7 +94,6 @@ class OMOP:
                                 AND c1.vocabulary_id='ICD10GM'""")})
         print("done")
 
-
     def get_valid_concept_id(self, LUT, code: str, code_version: int = -1):
         concept_id = None
         concept_ids = LUT.get(code)['concept_ids']

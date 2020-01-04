@@ -62,14 +62,11 @@ if __name__ == "__main__":
         labor_df = labor_pd[labor_pd.kh_internes_kennzeichen.isin(internal_ids)]
 
         for i, row in labor_df.iterrows():
-
-            # no LOINC version given -> expecting only one concept_id -> selecting first one
+            domain_id = omop.LOINC_LUT.get(str(row["LOINC"]))['domain_id']
             concept_id = omop.get_valid_concept_id(LUT=omop.LOINC_LUT,
                                                    code=str(row['LOINC']))
-            domain_id = omop.LOINC_LUT.get(str(row["LOINC"]))['domain_id']
 
             if domain_id == "Measurement":
-
                 # adding optional information if given
                 optional = {}
                 if str(row["low"]) != "nan":
@@ -106,11 +103,9 @@ if __name__ == "__main__":
         messungen_df = messungen_pd[messungen_pd.kh_internes_kennzeichen.isin(internal_ids)]
 
         for i, row in messungen_df.iterrows():
-
-            # no LOINC version given -> expecting only one concept_id -> selecting first one
+            domain_id = omop.LOINC_LUT.get(str(row["LOINC"]))['domain_id']
             concept_id = omop.get_valid_concept_id(LUT=omop.LOINC_LUT,
                                                    code=str(row['LOINC']))
-            domain_id = omop.LOINC_LUT.get(str(row["LOINC"]))['domain_id']
 
             if domain_id == "Measurement":
                 person.add_measurement(measurement_concept_id=str(concept_id),
@@ -141,23 +136,18 @@ if __name__ == "__main__":
         icd_df = icd_pd[icd_pd.kh_internes_kennzeichen.isin(internal_ids)]
 
         for i, row in icd_df.iterrows():
-
             icd_version = int(row['icd_version'])
             domain_id = omop.ICD10GM_LUT.get(str(row["icd_kode"]))['domain_id']
-
-            # get correct concept_id according to icd_version
             concept_id = omop.get_valid_concept_id(LUT=omop.ICD10GM_LUT,
                                                    code=str(row['icd_kode']),
                                                    code_version=icd_version)
 
             if domain_id == "Observation":
-
+                # TODO was ist mit lokalisation & sekundaer_kode
                 # adding optional information if given
                 optional = {}
                 if str(row["diagnosensicherheit"]) != "nan":
                     optional['qualifier_source_value'] = str(row["diagnosensicherheit"])
-                # TODO was ist mit lokalisation & sekundaer_kode
-
                 person.add_observation(observation_concept_id=str(omop.ICD10GM2SNOMED[concept_id]),
                                        observation_date="1999-01-01",  # TODO date ist requiered abder nicht angegeben
                                        observation_type_concept_id="0000",  # TODO welche type concept id?
@@ -168,7 +158,6 @@ if __name__ == "__main__":
 
             elif domain_id == "Condition":
                 # TODO was ist mit diagnosensicherheit, lokalisation & sekundaer_kode
-
                 person.add_condition(condition_concept_id=str(omop.ICD10GM2SNOMED[concept_id]),
                                      condition_start_date="1999-01-01",  # TODO date ist requiered abder nicht angegeben
                                      condition_start_datetime="1999-01-01 00:00:00",
@@ -197,12 +186,8 @@ if __name__ == "__main__":
         ops_df = ops_pd[ops_pd.kh_internes_kennzeichen.isin(internal_ids)]
 
         for i, row in ops_df.iterrows():
-
             ops_version = int(row['ops_version'])
-
             domain_id = omop.OPS_LUT.get(str(row["ops_kode"]))['domain_id']
-
-            # get correct concept_id according to ops_version
             concept_id = omop.get_valid_concept_id(LUT=omop.OPS_LUT,
                                                    code=str(row['ops_kode']),
                                                    code_version=ops_version)
@@ -238,7 +223,6 @@ if __name__ == "__main__":
         # insert into database -----------------------------------------------------------------------------------------
         res = person.insert_into_db()
         for sql in res:
-            pass
             # print(sql)
             omop.insert(sql)
         # omop.commit()  # TODO enable commit of whole person

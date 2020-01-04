@@ -60,11 +60,11 @@ class Person:
         self.observations.append(observation_d)
 
     def add_condition(self,
-                        condition_concept_id,
-                        condition_start_date,
-                        condition_start_datetime,
-                        condition_type_concept_id,
-                        **kwargs):
+                      condition_concept_id,
+                      condition_start_date,
+                      condition_start_datetime,
+                      condition_type_concept_id,
+                      **kwargs):
 
         # Optional Values
         condition_d = {key: value for key, value in kwargs.items()}
