@@ -80,6 +80,7 @@ class Person:
     def add_procedure(self,
                       procedure_concept_id,
                       procedure_date,
+                      procedure_datetime,
                       procedure_type_concept_id,
                       **kwargs):
         # Optional Values
@@ -88,6 +89,7 @@ class Person:
         # Required Values (Except procedure_id & person_id)
         procedure_d["procedure_concept_id"] = procedure_concept_id
         procedure_d["procedure_date"] = procedure_date
+        procedure_d["procedure_datetime"] = procedure_datetime
         procedure_d["procedure_type_concept_id"] = procedure_type_concept_id
 
         self.procedures.append(procedure_d)
@@ -103,66 +105,23 @@ class Person:
             keys += f"{key},"
             values += f"'{value}',"
         queries += f"INSERT INTO p21_cdm.person ({keys[:-1]}) VALUES({values[:-1]})",
+
         # TODO Add location
 
-        # measurement
-        # print(len(self.measurements), "Measurements")  # TODO Remove later
-        for m in self.measurements:
-            keys = "person_id,"
-            values = f"'{self.person['person_id']}',"
+        for data, tablename in [(self.measurements, "measurement"),
+                                (self.observations, "observation"),
+                                (self.conditions, "condition_occurrence"),
+                                (self.procedures, "procedure_occurrence"),
+                                (self.visits, "visit_occurrence")]:
+            # print(len(data), tablename)  # TODO Remove later
+            for m in data:
+                keys = "person_id,"
+                values = f"'{self.person['person_id']}',"
 
-            for key, value in m.items():
-                keys += f"{key},"
-                values += f"'{value}',"
+                for key, value in m.items():
+                    keys += f"{key},"
+                    values += f"'{value}',"
 
-            queries += f"INSERT INTO p21_cdm.measurement({keys[:-1]}) VALUES({values[:-1]})",
-
-        # observation
-        # print(len(self.observations), "Observations")  # TODO Remove later
-        for m in self.observations:
-            keys = "person_id,"
-            values = f"'{self.person['person_id']}',"
-
-            for key, value in m.items():
-                keys += f"{key},"
-                values += f"'{value}',"
-
-            queries += f"INSERT INTO p21_cdm.observation({keys[:-1]}) VALUES({values[:-1]})",
-
-        # condition_occurence
-        # print(len(self.conditions), "Conditions")  # TODO Remove later
-        for m in self.conditions:
-            keys = "person_id,"
-            values = f"'{self.person['person_id']}',"
-
-            for key, value in m.items():
-                keys += f"{key},"
-                values += f"'{value}',"
-
-            queries += f"INSERT INTO p21_cdm.condition_occurrence({keys[:-1]}) VALUES({values[:-1]})",
-
-        # procedure_occurence
-        # print(len(self.procedures), "Procedures")  # TODO Remove later
-        for m in self.procedures:
-            keys = "person_id,"
-            values = f"'{self.person['person_id']}',"
-
-            for key, value in m.items():
-                keys += f"{key},"
-                values += f"'{value}',"
-
-            queries += f"INSERT INTO p21_cdm.procedure_occurrence({keys[:-1]}) VALUES({values[:-1]})",
-
-        # visit_occurrence
-        # print(len(self.visits), "Visits")  # TODO Remove later
-        for m in self.visits:
-            keys = "person_id,"
-            values = f"'{self.person['person_id']}',"
-
-            for key, value in m.items():
-                keys += f"{key},"
-                values += f"'{value}',"
-
-            queries += f"INSERT INTO p21_cdm.visit_occurrence({keys[:-1]}) VALUES({values[:-1]})",
+                queries += f"INSERT INTO p21_cdm.{tablename}({keys[:-1]}) VALUES({values[:-1]})",
 
         return queries
