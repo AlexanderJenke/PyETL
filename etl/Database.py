@@ -26,6 +26,12 @@ class OMOP:
         self.preload_lut()
         self.GENDER_LUT = {"m": "8507", "w": "8532", "nan": "8551"}
         self.CONDITION_TYPE_LUT = {"ND": "44786629", "HD": "44786627"}
+        self.VISIT_TYPE_LUT = {"E": "9201",  # Einweisung  -> Inpatient Visit
+                               "V": "9201",  # Verlegung >24h -> Inpatient Visit
+                               "R": "9201",  # Aufnahme  aud Reha -> Inpatient Visit
+                               "A": "9202",  # Verlegung <24h -> Outpatient Visit
+                               "N": "9203",  # Notfall -> Emergency
+                               }
 
     def select(self, sql: str):
         self.cursor.execute(sql)
