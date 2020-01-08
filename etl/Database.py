@@ -8,7 +8,7 @@ class LUT(dict):
         super().__init__(content)
         self.name = name
         self.default = {'domain_id': "KeyNotFound",
-                        'concept_ids': ((-1, date(1970, 1, 1), date(2099, 12, 31)),)} if default is None else default
+                        'concept_ids': ((0, date(1970, 1, 1), date(2099, 12, 31)),)} if default is None else default
 
     def get(self, item, default=None):
         try:
@@ -32,6 +32,10 @@ class OMOP:
                                "A": "9202",  # Verlegung <24h -> Outpatient Visit
                                "N": "9203",  # Notfall -> Emergency
                                }
+        self.LOCALISATION_LUT = {"L": "4149748",
+                                 "R": "4310553",
+                                 "B": "0",
+                                 }
 
     def select(self, sql: str):
         self.cursor.execute(sql)
@@ -90,7 +94,7 @@ class OMOP:
             else:
                 self.LOINC_LUT[concept_code]['concept_ids'] += (concept_id, valid_start_date, valid_end_date),
 
-        self.ICD10GM2SNOMED = LUT("ICD10GM2SNOMED", default=-1,
+        self.ICD10GM2SNOMED = LUT("ICD10GM2SNOMED", default=0,
                                   content={icd_id: snomed_id for icd_id, snomed_id in self.select("""
                                 SELECT r.concept_id_1, r.concept_id_2 FROM p21_cdm.concept_relationship r
                                 JOIN p21_cdm.concept c1 ON r.concept_id_1 = c1.concept_id
