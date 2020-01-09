@@ -19,7 +19,8 @@ class LUT(dict):
 
 
 class OMOP:
-    def __init__(self, dbname='OHDSI', user='ohdsi_admin_user', host='localhost', port='5432', password='omop', do_commits=True):
+    def __init__(self, dbname='OHDSI', user='ohdsi_admin_user', host='localhost', port='5432', password='omop',
+                 do_commits=True):
         self.do_commits = do_commits
         self.conn = db.connect(f"dbname='{dbname}' user='{user}' host='{host}' port='{port}' password='{password}'")
         self.cursor = self.conn.cursor()
@@ -32,10 +33,13 @@ class OMOP:
                                "A": "9202",  # Verlegung <24h -> Outpatient Visit
                                "N": "9203",  # Notfall -> Emergency
                                }
-        self.LOCALISATION_LUT = {"L": "4149748",
-                                 "R": "4310553",
-                                 "B": "0",
-                                 }
+        self.LOCALISATION_LUT = LUT(default="0",
+                                    name="LOCALISATION_LUT",
+                                    content={"L": "4149748",
+                                             "R": "4310553",
+                                             "B": "0",
+                                             }
+                                    )
 
     def select(self, sql: str):
         self.cursor.execute(sql)

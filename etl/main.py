@@ -163,7 +163,7 @@ if __name__ == "__main__":
 
                 # add lokalisation
                 if str(row["lokalisation"]) != "nan":
-                    person.add_observation(observation_concept_id=omop.LOCALISATION_LUT(str(row['lokalisation'])),
+                    person.add_observation(observation_concept_id=omop.LOCALISATION_LUT.get(str(row['lokalisation'])),
                                            observation_date=fall_aufnahmedatum[:8],
                                            observation_type_concept_id="38000280",  # Observation recorded from EHR
                                            observation_source_value=str(row['lokalisation']),
@@ -196,7 +196,7 @@ if __name__ == "__main__":
                                            )
                     # add lokalisation
                     if str(row["lokalisation"]) != "nan":
-                        person.add_observation(observation_concept_id=omop.LOCALISATION_LUT(str(row['lokalisation'])),
+                        person.add_observation(observation_concept_id=omop.LOCALISATION_LUT.get(str(row['lokalisation'])),
                                                observation_date=fall_aufnahmedatum[:8],
                                                observation_type_concept_id="38000280",  # Observation recorded from EHR
                                                observation_source_value=str(row['lokalisation']),
@@ -213,7 +213,7 @@ if __name__ == "__main__":
 
                 # add lokalisation
                 if str(row["lokalisation"]) != "nan":
-                    person.add_observation(observation_concept_id=omop.LOCALISATION_LUT(str(row['lokalisation'])),
+                    person.add_observation(observation_concept_id=omop.LOCALISATION_LUT.get(str(row['lokalisation'])),
                                            observation_date=fall_aufnahmedatum[:8],
                                            observation_type_concept_id="38000280",  # Observation recorded from EHR
                                            observation_source_value=str(row['lokalisation']),
@@ -236,7 +236,7 @@ if __name__ == "__main__":
                                                            code_version=icd_version)
                     # add lokalisation
                     if str(row["lokalisation"]) != "nan":
-                        person.add_observation(observation_concept_id=omop.LOCALISATION_LUT(str(row['lokalisation'])),
+                        person.add_observation(observation_concept_id= omop.LOCALISATION_LUT.get(str(row['lokalisation'])),
                                                observation_date=fall_aufnahmedatum[:8],
                                                observation_type_concept_id="38000280",  # Observation recorded from EHR
                                                observation_source_value=str(row['lokalisation']),
@@ -290,7 +290,7 @@ if __name__ == "__main__":
 
                 # add lokalisation
                 if str(row["lokalisation"]) != "nan":
-                    person.add_observation(observation_concept_id=omop.LOCALISATION_LUT(str(row['lokalisation'])),
+                    person.add_observation(observation_concept_id=omop.LOCALISATION_LUT.get(str(row['lokalisation'])),
                                            observation_date=fall_aufnahmedatum[:8],
                                            observation_type_concept_id="38000280",  # Observation recorded from EHR
                                            observation_source_value=str(row['lokalisation']),
