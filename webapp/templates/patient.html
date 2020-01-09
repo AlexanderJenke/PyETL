@@ -62,12 +62,14 @@
 			{% if data[row][2] %}
 			<tr id="row{{row}}" class="collapse">
 				<td colspan="2">
+					<div style="background-color:#eeeeee">
 			
-					<ul class="list-group">
-						{% for i in data[row][3] %}
-						<li class="list-group-item">{{i}}</li>
-						{% endfor %}
-                                        </ul>
+						<ul class="list-group">
+							{% for i in data[row][3] %}
+							<li class="list-group-item">{{i}}</li>
+							{% endfor %}
+                                        	</ul>
+					</div>
 
 				</td>
 			</tr>
