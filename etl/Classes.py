@@ -101,12 +101,13 @@ class Person:
         keys = ""
         values = ""
         for key, value in self.person.items():
-            if key == "location": continue
+            if key == "location":
+                continue  # TODO Add location
+
             keys += f"{key},"
             values += f"'{value}',"
         queries += f"INSERT INTO p21_cdm.person ({keys[:-1]}) VALUES({values[:-1]})",
 
-        # TODO Add location
 
         for data, tablename in [(self.measurements, "measurement"),
                                 (self.observations, "observation"),

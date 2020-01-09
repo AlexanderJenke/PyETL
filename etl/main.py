@@ -159,6 +159,7 @@ if __name__ == "__main__":
                 optional = {}
                 if str(row["diagnosensicherheit"]) != "nan":
                     optional['qualifier_source_value'] = str(row["diagnosensicherheit"])
+                    # TODO add diagnosensicherheit
 
                 # add lokalisation
                 if str(row["lokalisation"]) != "nan":
