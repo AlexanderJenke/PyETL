@@ -1,13 +1,22 @@
 import pandas as pd
-from sys import argv
+#from sys import argv
 import os
 from Classes import Person
 from Database import OMOP
+from optparse import OptionParser
 
 from tqdm import tqdm
 
+def get_opts_and_args():
+    parser = OptionParser()
+    parser.add_option("--db_host", dest="db_host", default="localhost")
+    parser.add_option("--db_port", dest="db_port", default="5432")
+    return parser.parse_args()
+
+
 if __name__ == "__main__":
-    csv_dir = argv[1]  # Path to csv files
+    opts, args = get_opts_and_args()
+    csv_dir = args[0]  # Path to csv files
 
     # load csv files
     fall_csv = os.path.join(csv_dir, "FALL.csv")

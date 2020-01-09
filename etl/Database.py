@@ -2,9 +2,9 @@ import psycopg2 as db
 
 
 class OMOP:
-    def __init__(self, dbname='OHDSI', user='ohdsi_admin_user', host='localhost', password='omop', do_commits=True):
+    def __init__(self, dbname='OHDSI', user='ohdsi_admin_user', host='localhost', port='5432', password='omop', do_commits=True):
         self.do_commits = do_commits
-        self.conn = db.connect(f"dbname='{dbname}' user='{user}' host='{host}' password='{password}'")
+        self.conn = db.connect(f"dbname='{dbname}' user='{user}' host='{host}' port='{port}' password='{password}'")
         self.cursor = self.conn.cursor()
         self.preload_lut()
         self.GENDER_LUT = {"m": "8507", "w": "8532", "nan": "8551"}
