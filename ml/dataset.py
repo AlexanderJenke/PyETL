@@ -212,5 +212,5 @@ if __name__ == '__main__':
     # OMOP_File(f"{DATABASE_NAME}.db.pkl").save_sample_data(f"{DATABASE_NAME}.samples.pkl")
     ds = OMOP_Base(None, path=f"{DATABASE_NAME}.samples.pkl")
     print(f"{DATABASE_NAME}.samples.pkl")
-    print(f"n_samples: {len(ds_file)}")
-    print(f"n_positiv: {ds_file.n_pos()}")
+    print(f"n_samples: {len(ds)}")
+    print(f"n_positiv: {ds.n_pos()}")
