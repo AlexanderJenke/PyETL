@@ -1,4 +1,4 @@
-This is LuaTeX, Version 1.10.0 (TeX Live 2019/Arch Linux)  (format=lualatex 2020.1.14)  16 JAN 2020 15:26
+This is LuaTeX, Version 1.10.0 (TeX Live 2019/Arch Linux)  (format=lualatex 2020.1.14)  16 JAN 2020 19:59
  restricted system commands enabled.
 **main
 (./main.tex
@@ -55,7 +55,7 @@ Lua module: luaotfload-multiscript 2019-09-13 3.00 luaotfload submodule / multis
 cript
 Inserting `luaotfload.rewrite_fontname' at position 5 in `luaotfload.patch_font'
 .
-luaotfload | main : initialization completed in 0.109 seconds
+luaotfload | main : initialization completed in 0.108 seconds
 (/usr/share/texmf-dist/tex/latex/exam/exam.cls
 Document Class: exam 2017/12/17 Version 2.603 by Philip Hirschhorn
 (/usr/share/texmf-dist/tex/latex/base/ifthen.sty
@@ -281,7 +281,26 @@ LaTeX Info: Redefining \[ on input line 2855.
 LaTeX Info: Redefining \] on input line 2856.
 )
 \c@eqn=\count144
- (./main.aux)
+ (./main.aux
+
+LaTeX Warning: Label `question@1' multiply defined.
+
+
+LaTeX Warning: Label `question@1' multiply defined.
+
+
+LaTeX Warning: Label `question@1' multiply defined.
+
+
+LaTeX Warning: Label `fig:text' multiply defined.
+
+
+LaTeX Warning: Label `question@1' multiply defined.
+
+
+LaTeX Warning: Label `question@1' multiply defined.
+
+)
 \openout1 = main.aux
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 33.
@@ -298,8 +317,7 @@ LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 33.
 LaTeX Font Info:    ... okay on input line 33.
 LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 33.
 LaTeX Font Info:    ... okay on input line 33.
-
-(/usr/share/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
+ (/usr/share/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
 \scratchcounter=\count145
 \scratchdimen=\dimen126
@@ -418,41 +436,43 @@ ists.png>]
 <images/db.png, id=23, 3188.91376pt x 542.025pt>
 File: images/db.png Graphic file (type png)
 <use images/db.png>
-Package luatex.def Info: images/db.png  used on input line 143.
+Package luatex.def Info: images/db.png  used on input line 141.
 (luatex.def)             Requested size: 375.80544pt x 63.87402pt.
- [2<./images/db.png>]
-<images/login.png, id=28, 3188.91376pt x 741.77126pt>
+<images/login.png, id=24, 3188.91376pt x 741.77126pt>
 File: images/login.png Graphic file (type png)
 <use images/login.png>
-Package luatex.def Info: images/login.png  used on input line 192.
+Package luatex.def Info: images/login.png  used on input line 190.
 (luatex.def)             Requested size: 375.80544pt x 87.4128pt.
- [3<./images/login.png>]
-This exam contains 6 questions with 0 parts, 0 subparts, and 0 subsubparts.
+ [2<./images/db.png>]
+Overfull \hbox (6.23999pt too wide) in paragraph at lines 215--216
+[]\TU/lmr/m/n/10 Are sim-ple com-mand line ar-gu-ments suf-fi-cient as con-fig-
+u-ra-tion? Ex-am-ple: python cron.py --db_port=1234
+ []
 
-Class exam Warning: Point totals have changed. Rerun to get point totals right.
-
+[3<./images/login.png>]
+This exam contains 8 questions with 0 parts, 0 subparts, and 0 subsubparts.
 (./main.aux)
 
-LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
+LaTeX Warning: There were multiply-defined labels.
 
 )
 
 Here is how much of LuaTeX's memory you used:
- 4694 strings out of 493864
+ 4703 strings out of 493864
  100000,184870 words of node,token memory allocated
  587 words of node memory still in use:
    5 hlist, 2 vlist, 2 rule, 2 glue, 4 kern, 1 glyph, 7 attribute, 73 glue_spec,
  7 attribute_list, 2 write nodes
-   avail lists: 2:322,3:97,4:5,5:118,6:27,7:1414,8:1,9:126,10:4,11:73
- 9152 multiletter control sequences out of 65536+600000
+   avail lists: 2:366,3:115,4:5,5:108,6:32,7:1639,8:1,9:131,10:4,11:90
+ 9161 multiletter control sequences out of 65536+600000
  44 fonts using 2873639 bytes
- 46i,11n,45p,251b,367s stack positions out of 5000i,500n,10000p,200000b,100000s
+ 46i,11n,45p,251b,313s stack positions out of 5000i,500n,10000p,200000b,100000s
 </usr/share/texmf-dist/fonts/opentype/public/lm/lmroman10-regular.otf></usr/shar
 e/texmf-dist/fonts/opentype/public/lm/lmroman12-bold.otf></usr/share/texmf-dist/
 fonts/opentype/public/lm/lmroman12-regular.otf></usr/share/texmf-dist/fonts/open
 type/public/lm/lmroman17-regular.otf></usr/share/texmf-dist/fonts/type1/public/a
 msfonts/cm/cmsy10.pfb>
-Output written on main.pdf (3 pages, 465326 bytes).
+Output written on main.pdf (3 pages, 466486 bytes).
 
 PDF statistics: 62 PDF objects out of 1000 (max. 8388607)
  27 compressed objects within 1 object stream

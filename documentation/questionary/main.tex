@@ -35,7 +35,7 @@
 \maketitle
 %\section*{Questionary}
 
-\section*{Design}
+\section*{Frontend}
 
 \subsection*{Color Theme}
 
@@ -129,8 +129,6 @@ The following images show the reasons, why out algorithm detected decubitus in d
 
 \end{questions}
 
-\section*{Functionality}
-
 \subsection*{Database Settings}
 
 The frontend is completely separated from the ETL process and the detection algorithm. It just shows the results from the database. 
@@ -204,6 +202,38 @@ Medical records are highly confidential. One can prevent leaking data by a authe
 		\choice Doesn't matter
 	\end{checkboxes}
 
+\end{questions}
+
+\section*{Backend}
+
+Obviously the cron job for ETL and decubitus detection needs to be configured according to several parameters. 
+We recommend a short python script, which configures and starts the cron job. 
+
+
+\begin{questions}
+
+	\question Are simple command line arguments sufficient as configuration? Example: python cron.py --db\_port=1234 --db\_host=localhost
+
+	\begin{checkboxes}
+		\choice	Yes
+		\choice	No
+	\end{checkboxes}
+
+	If you answered: "No", how should we include settings?
+
+	\vspace{3cm}
+
+	\question Which parameters are necessary? Please check them.
+
+	\begin{checkboxes}
+		\choice cron interval
+		\choice database username
+		\choice database password
+		\choice database host
+		\choice database port
+		\choice location of the CSV files
+		\choice logfile
+	\end{checkboxes}
 \end{questions}
 
 \end{document}
