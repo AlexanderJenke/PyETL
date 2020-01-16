@@ -48,15 +48,24 @@
 
 	<script>
                 function togglePatient(patientID) {
-                        var toggleItems = document.getElementsByClassName("collapse");
-                        for (var i = 0; i < toggleItems.length; i++) {
-                        //      toggleItems[i].toggle('active');
-                        }
                         $(".collapse").collapse('hide');
                         $("#" + patientID).collapse('show');
                 }
 	</script>
 
+<p>
+  <a class="btn btn-primary" data-toggle="collapse" href="#collapseExample" role="button" aria-expanded="false" aria-controls="collapseExample">
+    Link with href
+  </a>
+  <button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
+    Button with data-target
+  </button>
+</p>
+<div class="collapse" id="collapseExample">
+  <div class="card card-body">
+    Anim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry richardson ad squid. Nihil anim keffiyeh helvetica, craft beer labore wes anderson cred nesciunt sapiente ea proident.
+  </div>
+</div>
 	<table class="table table-hover">
 		<thead>
 			<tr>
@@ -66,15 +75,16 @@
 		</thead>
 		<tbody>
 			{% for row in data %}
-			<tr data-toggle="collapse" data-target="#row{{row}}"
-						   {% if data[row][2] %} class="table-danger" onclick="togglePatient(row{{row}})" {% endif %} style="background-color:#eeeeee"> 
+			<tr 
+						   {% if data[row][2] %} class="table-danger" onclick="togglePatient('row{{row}}')" {% endif %} style="background-color:#eeeeee"> 
 				<td>{{row}}</td> 
 				<td>{{data[row][0]}}</td>
 			</tr>
 			{% if data[row][2] %}
-			<tr id="row{{row}}" class="collapse" style="background-color:#eeeeee">
+			<!--tr id="row{{row}}" class="collapse" style="background-color:#eeeeee"-->
+			<tr style="background-color:#eeeeee">
 				<td colspan="2">
-					<div style="margin-top:-12px;background-color:#ffffff">	
+					<div class="collapse" id="row{{row}}" style="margin-top:-12px;background-color:#ffffff">	
 						<span style="font-size:large;margin-bottom:10px">It was detected that the patient may is risk of receiving decubitus.</span></br>
 						<!--ul class="list-group">
 							{% for i in data[row][3] %}
@@ -92,11 +102,6 @@
 			{% endfor %}
 		</tbody>
 	</table>
-	<script>
-		function toggle_patient(patient_id) {
-			object = find
-		}
-	</script>
 </div>
 </body>
 
