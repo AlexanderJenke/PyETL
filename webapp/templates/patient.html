@@ -45,6 +45,18 @@
   </div>
 </nav>
 <div class="container">
+
+	<script>
+                function togglePatient(patientID) {
+                        var toggleItems = document.getElementsByClassName("collapse");
+                        for (var i = 0; i < toggleItems.length; i++) {
+                        //      toggleItems[i].toggle('active');
+                        }
+                        $(".collapse").collapse('hide');
+                        $("#" + patientID).collapse('show');
+                }
+	</script>
+
 	<table class="table table-hover">
 		<thead>
 			<tr>
@@ -55,7 +67,7 @@
 		<tbody>
 			{% for row in data %}
 			<tr data-toggle="collapse" data-target="#row{{row}}"
-						   {% if data[row][2] %} class="table-danger" {% endif %} style="background-color:#eeeeee"> 
+						   {% if data[row][2] %} class="table-danger" onclick="togglePatient(row{{row}})" {% endif %} style="background-color:#eeeeee"> 
 				<td>{{row}}</td> 
 				<td>{{data[row][0]}}</td>
 			</tr>
@@ -80,6 +92,11 @@
 			{% endfor %}
 		</tbody>
 	</table>
+	<script>
+		function toggle_patient(patient_id) {
+			object = find
+		}
+	</script>
 </div>
 </body>
 
