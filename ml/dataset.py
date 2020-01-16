@@ -71,7 +71,7 @@ class OMOP_Base(torch.utils.data.Dataset):
         return data
 
     def __getitem__(self, item):
-        return self.data[item][0], self.data[item][1]  # features, label
+        return torch.FloatTensor(self.data[item][0]), torch.FloatTensor([self.data[item][1]])  # features, label
 
     def __len__(self):
         return len(self.data)
