@@ -4,13 +4,25 @@ from db import ConfigHandler
 import os
 from conn import * 
 
-app = Flask(__name__)
+app = Flask(__name__, static_url_path='')
 cron_job = ETLCronJob()
 handler = ConfigHandler()
 
 @app.route("/")
 def index():
     return render_template("login.html")
+
+@app.route("/js/<path:path>")
+def send_js(path):
+    return send_from_directory("js", path)
+
+@app.route("/css/<path:path>")
+def send_css(path):
+    return send_from_directory("css", path)
+
+@app.route("/test")
+def test():
+    return render_template("test.html") 
 
 @app.route("/login", methods= ["POST"])
 def login():

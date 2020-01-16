@@ -1,22 +1,17 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <title>Bootstrap 4 Website Example</title>
+  <title>Decubitus Detector</title>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" crossorigin="anonymous">
+  <link rel="stylesheet" type="text/css" href="main.css">
+  <link rel="stylesheet" href="font-awesome-4.7.0/css/font-awesome.min.css">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" crossorigin="anonymous"></script>
 </head>
-<body style="padding-top:65px">
-
-
-<!--div class="jumbotron text-center" style="background:#7FFFD4;margin-bottom:0;position:fixed">
-                <h1>Decubitus Detector</h1>
-</div-->
-
+<body style="padding-top:130px;">
 
 <nav class="navbar navbar-expand-sm bg-dark navbar-dark fixed-top">
   <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#collapsibleNavbar">
@@ -45,34 +40,56 @@
   </div>
 </nav>
 <div class="container">
-
-	<script>
-                function togglePatient(patientID) {
-                        $(".collapse").collapse('hide');
-                        $("#" + patientID).collapse('show');
-                }
+	<script src="main.js">
+		
 	</script>
 
-	<table class="table table-hover">
+	<input id ="idFilter" type="text" class="form-control" placeholder="Filter table by patient ID" onkeyup="filterTableById()" style="margin-bottom:12px"/>
+	<button class="btn btn-primary" onclick="sortTable()" style="margin-bottom:20px">Sort values by color</button>
+	<button class="btn btn-primary" onclick="sortBack()" style="margin-bottom:20px">Recover the original order of the table</button>
+	<button class="btn" data-toggle="modal" data-target="#myModal" style="margin-bottom:20px;float:right;"><i class="fa fa-question-circle fa-2x"></i></button>
+
+	<div class="modal fade" id="myModal" role="dialog">
+		<div class="modal-dialog">
+		  <div class="modal-content">
+			<div class="modal-header">
+			  <h4 class="modal-title">Help</h4>
+			</div>
+			<div class="modal-body">
+			  <p>Click on a patient in order to see more information about him.</p>
+			  <p>If a patient is colored red, there is a potential risk, he or she (will) suffer(s) from decubitus, according to the algorithm. 
+				  However, there is no guarantee that non-red colored patients are not affected. 
+			  </p>
+			</div>
+			<div class="modal-footer">
+			  <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+			</div>
+		  </div>
+		  
+		</div>
+	  </div>
+
+	<table class="table table-hover" id="table">
 		<thead>
 			<tr>
-				<th> Patient number </th>
+				<th> Patient ID </th>
 				<th> Age </th>
 			</tr>
 		</thead>
 		<tbody>
 			{% for row in data %}
-			<tr 
-						   {% if data[row][2] %} class="table-danger" onclick="togglePatient('row{{row}}')" {% endif %} style="background-color:#eeeeee"> 
+			<tr id="{{row}}" 
+	       {% if data[row][2] %} class="table-danger" {% else %} class="table-primary" {% endif %} onclick="togglePatient('row{{row}}')"> 
 				<td>{{row}}</td> 
 				<td>{{data[row][0]}}</td>
 			</tr>
 			{% if data[row][2] %}
 			<!--tr id="row{{row}}" class="collapse" style="background-color:#eeeeee"-->
-			<tr style="background-color:#eeeeee">
-				<td colspan="2">
-					<div class="collapse" id="row{{row}}" style="margin-top:-12px;background-color:#ffffff">	
-						<span style="font-size:large;margin-bottom:10px">It was detected that the patient may is risk of receiving decubitus.</span></br>
+			<tr id="{{row}}.5"  style="background-color:#eeeeee;">
+				<td colspan="2" style="margin-top:0px;margin-bottom:0px;padding-top:0px;padding-bottom:0px;">
+					<div class="collapse" id="row{{row}}" style="padding-left:5px;margin-bottom:10px;margin-top:0px;background-color:#ffffff">	
+						<span style="font-size:large;margin-bottom:10px">The algorithm found there is a potential risk that the patient may or will 
+							may suffer decubitus. </span></br>
 						<!--ul class="list-group">
 							{% for i in data[row][3] %}
 							<li class="list-group-item">{{i}}</li>
@@ -81,6 +98,21 @@
 						{% for i in data[row][3] %}
 						<span>{{i}}</span></br>
 						{% endfor %}
+					</div>
+
+				</td>
+			</tr>
+			{% else %}
+			<tr id="{{row}}.5"  style="background-color:#eeeeee;">
+				<td colspan="2" style="margin-top:0px;margin-bottom:0px;padding-top:0px;padding-bottom:0px;">
+					<div class="collapse" id="row{{row}}" style="padding-left:5px;margin-bottom:10px;margin-top:0px;background-color:#ffffff">	
+						<span style="font-size:large;margin-bottom:10px">It was not detected that the patient suffers or will suffer from decubitus. 
+						However, there is still a residual risk, as the algorithm is not infallible.</span></br>
+						<!--ul class="list-group">
+							{% for i in data[row][3] %}
+							<li class="list-group-item">{{i}}</li>
+							{% endfor %}
+                                        	</ul-->
 					</div>
 
 				</td>
