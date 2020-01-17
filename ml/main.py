@@ -1,49 +1,63 @@
-import sys
-if sys.version_info[1] <= 5:
-    pass
-    # -*- coding: future_fstrings -*-
+# -*- coding: future_fstrings -*-
 
 import torch
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 import tensorboardX
 import numpy as np
+import pickle
 
 from dataset import OMOP_Base
 from model import Net
 
 if __name__ == '__main__':
+    batch_size = 1  # 000
+
+    with open("synpuf_cdm.db.pkl", 'rb') as file:
+        db_data = pickle.load(file)
+    patient_data = db_data['data']
+    alphabet = db_data['alphabet']
+    features_map = sorted(list(set(np.concatenate([list(patient['datapoints_d'].keys())
+                                                   for patient in patient_data if len(patient['datapoints_d'])]))))
+
+    features_lut = ["Age", "Is Male", "Is Female"]
+    for feature_id in features_map:
+        features_lut.append(alphabet[feature_id][0])
+
     # model_path = sys.argv[1]
-    model_path = "model_small.pt"
+    model_path = "model1.pt"
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    # device = 'cpu'
     print(device)
     ds = OMOP_Base(None, path="synpuf_cdm.samples.pkl")
+    dl = DataLoader(ds, batch_size=batch_size, shuffle=False, pin_memory=True, num_workers=8)
 
-    model = Net(len(ds[0][0])).to(device)
-    model.load(model_path)
+    model = Net(len(ds[0][0]))
+    model.load(model_path, device=device)
+    model.to(device)
+
     for param in model.parameters():
         param.requires_grad = False
-        param.retain_grad()
 
     feature_importance = np.zeros((len(ds), len(ds[0][0])), dtype=np.float)
-    for i, batch in enumerate(tqdm(ds)):
+    for i, batch in enumerate(tqdm(dl)):
         features, labels = batch
 
-        features.requires_grad = True
         features = features.to(device)
         labels = labels.to(device)
 
-        output = model(features)
+        features.requires_grad = True
 
-        if labels[0]:
-            loss = (output - 0).pow(2)*1000
-        else:
-            loss = (output - 1).pow(2)*1000
+        output = model(features).mean()
 
-        loss.backward()
+        output.data = torch.FloatTensor([-1 if labels.item() else 1]).to(device)
+        output.backward()
 
-        feature_importance[i] = features.grad.numpy()
+        feature_importance[i * batch_size: i * batch_size + features.shape[0]] = features.grad.cpu().numpy()
 
-    print(feature_importance.max())
+    importance = {}
+    for i, v in enumerate(feature_importance.mean(axis=0)):
+        importance[i] = v
 
-
+    for id in sorted(importance, key=lambda x: importance[x])[:100]:
+        print(features_lut[id])
