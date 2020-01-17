@@ -24,3 +24,9 @@ class Net(nn.Module):
         x = self.dropout(x)
         x = torch.sigmoid(self.fc6(self.fc5(x)))
         return x
+
+    def save(self, path):
+        torch.save(self.state_dict(), path)
+
+    def load(self, path):
+        self.load_state_dict(torch.load(path))
