@@ -88,10 +88,15 @@ class OMOP_DB(OMOP_Base):
                  user='ohdsi_admin_user',
                  host='localhost',
                  port='5432',
-                 password='omop'):
+                 password='omop',
+                 path=None):
         self.conn = db.connect(f"dbname='{dbname}' user='{user}' host='{host}' port='{port}' password='{password}'")
         self.cursor = self.conn.cursor()
         self.db_data = self._load_db()
+        if path is not None:
+            # save db data to file
+            self.save_db_data(path)
+
         super().__init__(self.db_data)
 
     def _load_db(self):
@@ -208,7 +213,7 @@ class OMOP_File(OMOP_Base):
 
 
 if __name__ == '__main__':
-    # OMOP_DB().save_db_data(f"{DATABASE_NAME}.db.pkl")
+    # OMOP_DB(path=f"{DATABASE_NAME}.db.pkl")
     # OMOP_File(f"{DATABASE_NAME}.db.pkl").save_sample_data(f"{DATABASE_NAME}.samples.pkl")
     ds = OMOP_Base(None, path=f"{DATABASE_NAME}.samples.pkl")
     print(f"{DATABASE_NAME}.samples.pkl")
