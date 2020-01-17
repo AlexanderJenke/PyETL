@@ -59,5 +59,5 @@ if __name__ == '__main__':
     for i, v in enumerate(feature_importance.mean(axis=0)):
         importance[i] = v
 
-    for id in sorted(importance, key=lambda x: importance[x])[:100]:
+    for id in sorted(importance, key=lambda x: importance[x], reverse=True)[:100]:
         print(features_lut[id])

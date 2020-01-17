@@ -13,7 +13,7 @@ import tensorboardX
 import numpy as np
 
 from dataset import OMOP_Base
-from model import Net
+from model import Net, SVM
 
 N_EPOCHS = 100
 MAX_LR = 1e-1
@@ -25,7 +25,7 @@ if __name__ == '__main__':
     trainset = OMOP_Base(None, path="synpuf_cdm.samples.pkl")
     trainloader = DataLoader(trainset, batch_size=BATCH_SIZE, shuffle=True, pin_memory=True, num_workers=8)
 
-    model = Net(len(trainset[0][0])).to(device)
+    model = SVM(len(trainset[0][0])).to(device)  # Net
 
     optim = SGD(model.parameters(), lr=MAX_LR, momentum=0.9)
     lr_sched = OneCycleLR(optim, max_lr=MAX_LR, epochs=N_EPOCHS, steps_per_epoch=len(trainloader))
@@ -52,4 +52,4 @@ if __name__ == '__main__':
         log.add_scalar("Loss", np.mean(mean_loss), global_step=epoch)
         log.add_scalar("LR", lr_sched.get_lr(), global_step=epoch)
 
-    model.save("model.pt")
+    model.save("svm.pt")
