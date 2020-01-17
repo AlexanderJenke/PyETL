@@ -12,13 +12,13 @@ from model import Net
 
 N_EPOCHS = 100
 MAX_LR = 1e-1
-BATCH_SIZE = 1000
+BATCH_SIZE = 100
 
 if __name__ == '__main__':
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     trainset = OMOP_Base(None, path="synpuf_cdm.samples.pkl")
-    trainloader = DataLoader(trainset, batch_size=BATCH_SIZE, shuffle=True, pin_memory=True)
+    trainloader = DataLoader(trainset, batch_size=BATCH_SIZE, shuffle=True, pin_memory=True, num_workers=8)
 
     model = Net(len(trainset[0][0])).to(device)
 
@@ -38,7 +38,7 @@ if __name__ == '__main__':
             output = model(features)
 
             loss = loss_fn(output, labels)
-            mean_loss += loss.item()
+            mean_loss.append(loss.item())
 
             loss.backward()
             optim.step()
@@ -46,3 +46,5 @@ if __name__ == '__main__':
 
         log.add_scalar("Loss", np.mean(mean_loss), global_step=epoch)
         log.add_scalar("LR", lr_sched.get_lr(), global_step=epoch)
+
+    model.save("model.pt")
