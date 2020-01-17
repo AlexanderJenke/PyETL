@@ -1,3 +1,7 @@
+import sys
+if sys.version_info[1] <= 5:
+    pass
+    # -*- coding: future_fstrings -*-
 import psycopg2 as db
 import torch
 import pickle

@@ -29,4 +29,13 @@ class Net(nn.Module):
         torch.save(self.state_dict(), path)
 
     def load(self, path):
-        self.load_state_dict(torch.load(path))
+        # resize model according to file
+        state_dict = torch.load(path,map_location=torch.device(
+            torch.device("cuda:0" if torch.cuda.is_available() else "cpu")))
+        for key in state_dict:
+            if key.endswith("weight"):
+                self.__getattr__(key.split('.')[0]).__init__(state_dict[key].shape[1], state_dict[key].shape[0])
+                print(key.split('.')[0], state_dict[key].shape)
+
+        # load params
+        self.load_state_dict(state_dict)
