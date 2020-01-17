@@ -40,7 +40,7 @@
 \subsection*{Color Theme}
 
 The following images show different color themes of a table, containing patient information. 
-Red rows indicate that our algorithm detected a potential decubitus patient. 
+Red rows indicate that our algorithm detected a potential decubitus risk. 
 
 \begin{tabular}{cc}
 	\num\putindeepbox[7pt]{\includegraphics[width=0.45\linewidth]{images/gray.png}}
@@ -81,10 +81,10 @@ Red rows indicate that our algorithm detected a potential decubitus patient.
 \question Which color theme do you believe is the most suitable one?
 
 \begin{checkboxes}
-	\choice a)
-	\choice b)
-	\choice c)
-	\choice d)
+	\choice a) gray
+	\choice b) green
+	\choice c) yellow
+	\choice d) blue
 \end{checkboxes}
 
 \end{questions}
@@ -93,7 +93,7 @@ Red rows indicate that our algorithm detected a potential decubitus patient.
 
 \setcounter{eqn}{0}
 
-The following images show the reasons, why out algorithm detected decubitus in different styles: As a list and as text. 
+The following images show the reasons, why our algorithm detected decubitus in different styles: As a list and as text. 
 
 \begin{tabular}{cc}
 	\num\putindeepbox[7pt]{\includegraphics[width=0.45\linewidth]{images/text.png}}
@@ -123,18 +123,19 @@ The following images show the reasons, why out algorithm detected decubitus in d
 \question Would you prefer a text or a list?
 
 \begin{checkboxes}
-	\choice a)
-	\choice b)
+	\choice a) list
+	\choice b) text
 \end{checkboxes}
 
 \end{questions}
 
 \subsection*{Database Settings}
 
-The frontend is completely separated from the ETL process and the detection algorithm. It just shows the results from the database. 
-Therefore the database settings must be configured. By assumption, most doctors will be confused with this task. Should we still give him the option to 
-do change the database connection settings? The following image shows how the configuration page looks like. 
-Note: As the frontend is basically a website, a server admin should still be able to modify the settings.  
+The frontend is completely separated from the ETL process and the detection algorithm. It just shows the results, stored in a database. 
+But still, the database settings must be configured. Should database connection settings, such as hostname, port, username and password
+be accessible from the frontend?\\
+The following image shows how the configuration page may look like. \\
+Note: As the frontend is basically a website, a server admin will still be able to modify the settings.
 
 \begin{figure}[H]
 	\centering
@@ -150,7 +151,6 @@ Note: As the frontend is basically a website, a server admin should still be abl
 \begin{checkboxes}
 	\choice Yes
 	\choice No
-	\choice Doesn't matter
 \end{checkboxes}
 
 \end{questions}
@@ -169,21 +169,30 @@ Apart from reasons, why a patient is endangered, a doctor requires additional in
 \end{checkboxes}
 
 If you checked: "No", which additional information would you show the user?
-\vspace{5cm}
+\vspace{4cm}
 
-\question Should there be an option to export the results as PDF file?
+\question Should there be an option to export the results as PDF file/a printable version?
 
 \begin{checkboxes}
 	\choice Yes
 	\choice No
-	\choice Doesn't matter
 \end{checkboxes}
+
+\question Which filter/sort options for the patients would you include?
+
+	\begin{checkboxes}
+		\choice Sort by detection (all endangered patients are shifted up)
+		\choice Filter by patient ID
+	\end{checkboxes}
+
+	If you suggest additional filters, write them down below.
+	\vspace{3cm}
 
 \end{questions}
 
 \subsection*{Credentials}
 
-Medical records are highly confidential. One can prevent leaking data by a authentication system. The following image shows a login page.
+Medical records are highly confidential. One can prevent leaking data by an authentication system. The following image shows a login page.
 
 \begin{figure}[H]
 	\centering
@@ -199,20 +208,19 @@ Medical records are highly confidential. One can prevent leaking data by a authe
 	\begin{checkboxes}
 		\choice Yes
 		\choice No
-		\choice Doesn't matter
 	\end{checkboxes}
 
 \end{questions}
 
 \section*{Backend}
 
-Obviously the cron job for ETL and decubitus detection needs to be configured according to several parameters. 
+Obviously the cron job for ETL and decubitus detection needs to be configured, according to several parameters. 
 We recommend a short python script, which configures and starts the cron job. 
 
 
 \begin{questions}
 
-	\question Are simple command line arguments sufficient as configuration? Example: python cron.py --db\_port=1234 --db\_host=localhost
+	\question Are simple command line arguments sufficient as configuration? \\E.g.: python3 cron.py --db\_port=1234 --db\_host=localhost
 
 	\begin{checkboxes}
 		\choice	Yes
