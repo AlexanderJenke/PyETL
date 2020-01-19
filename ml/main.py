@@ -1,4 +1,3 @@
-# -*- coding: future_fstrings -*-
 
 import torch
 from torch.utils.data import DataLoader
@@ -25,7 +24,7 @@ if __name__ == '__main__':
         features_lut.append(alphabet[feature_id][0])
 
     # model_path = sys.argv[1]
-    model_path = "model1.pt"
+    model_path = "model_small.pt"
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     # device = 'cpu'
     print(device)

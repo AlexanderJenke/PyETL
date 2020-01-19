@@ -1,4 +1,4 @@
-# -*- coding: future_fstrings -*-
+'''# -*- coding: future_fstrings -*-'''
 
 import psycopg2 as db
 import torch
