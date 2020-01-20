@@ -7,7 +7,7 @@ import numpy as np
 import pickle
 
 from dataset import OMOP_Base
-from model import Net
+from model import *
 
 if __name__ == '__main__':
     batch_size = 1  # 000
@@ -24,14 +24,14 @@ if __name__ == '__main__':
         features_lut.append(alphabet[feature_id][0])
 
     # model_path = sys.argv[1]
-    model_path = "model_small.pt"
+    model_path = "svm_57f1.pt"
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     # device = 'cpu'
     print(device)
     ds = OMOP_Base(None, path="synpuf_cdm.samples.pkl")
     dl = DataLoader(ds, batch_size=batch_size, shuffle=False, pin_memory=True, num_workers=8)
 
-    model = Net(len(ds[0][0]))
+    model = SVM(len(ds[0][0]))
     model.load(model_path, device=device)
     model.to(device)
 
@@ -58,5 +58,5 @@ if __name__ == '__main__':
     for i, v in enumerate(feature_importance.mean(axis=0)):
         importance[i] = v
 
-    for id in sorted(importance, key=lambda x: importance[x], reverse=True)[:100]:
+    for id in sorted(importance, key=lambda x: importance[x], reverse=True):
         print(features_lut[id])
