@@ -18,22 +18,24 @@ class OMOP_Base(torch.utils.data.Dataset):
             self.data = self._prepare_data(data)
         else:
             with open(path, "rb") as f:
-                self.data = pickle.load(f)
+                d = pickle.load(f)
+                if "samples" in d:
+                    self.data = d["samples"]
+                    self.features_lut = d["features_lut"]
+                    self.alphabet = d["alphabet"]
+                else:
+                    self.data = d
 
     def n_pos(self):
         return sum([s[1] for s in self.data])
 
-    @staticmethod
-    def _prepare_data(data_d: dict):
+    def _prepare_data(self, data_d: dict):
         print("preparing data...")
         data = []
 
         patient_data = data_d['data']
         alphabet = data_d['alphabet']
-
-        features_map = sorted(list(set(np.concatenate([list(patient['datapoints_d'].keys())
-                                                       for patient in patient_data if len(patient['datapoints_d'])]))))
-        print(f"N_features: {len(features_map) + 3}")
+        self.alphabet = alphabet
 
         labels = set()
         print("Lables:")
@@ -42,6 +44,17 @@ class OMOP_Base(torch.utils.data.Dataset):
             if "Pressure ulcer" in name:
                 labels.add(id)
                 print(f"    {name}")
+
+        features_map = sorted(list(set(np.concatenate(
+            [list(patient['datapoints_d'].keys())
+             for patient in patient_data if len(patient['datapoints_d'])
+             if bool(set(patient['datapoints_d'].keys()) & labels)
+             ]))))
+
+        features_lut = {key: features_map.index(key) + 3 for key in features_map}
+        self.features_lut = features_lut
+
+        print(f"N_features: {len(features_map) + 3}")
 
         for patient in tqdm(patient_data, desc="generating samples"):
             timeline = {}
@@ -62,13 +75,15 @@ class OMOP_Base(torch.utils.data.Dataset):
                 features[2] = date.today().year - patient['year_of_birth']  # age
                 for j in range(i + 1):
                     for datapoint in timeline[timestamps[i + 1]]:
+                        if datapoint['concept_id'] not in features_map:
+                            continue
                         if "enddate" in datapoint and \
                                 (datapoint['enddate'] - date(1970, 1, 1)) / timedelta(seconds=1) < timestamps[i]:
                             continue
                         if datapoint['value'] is None:
-                            features[features_map.index(datapoint['concept_id']) + 3] = 1
+                            features[features_lut[datapoint['concept_id']]] = 1
                         else:
-                            features[features_map.index(datapoint['concept_id']) + 3] = datapoint['value']
+                            features[features_lut[datapoint['concept_id']]] = datapoint['value']
                 data.append((features, label))
         return data
 
@@ -80,8 +95,11 @@ class OMOP_Base(torch.utils.data.Dataset):
 
     def save_sample_data(self, path):
         print(f"saving data to {path}")
+        obj = {"samples": self.data,
+               "features_lut": self.features_lut,
+               "alphabet": self.alphabet}
         with open(path, 'wb') as file:
-            pickle.dump(self.data, file)
+            pickle.dump(obj, file)
 
 
 class OMOP_DB(OMOP_Base):
@@ -216,8 +234,8 @@ class OMOP_File(OMOP_Base):
 
 if __name__ == '__main__':
     # OMOP_DB(path=f"{DATABASE_NAME}.db.pkl")
-    # OMOP_File(f"{DATABASE_NAME}.db.pkl").save_sample_data(f"{DATABASE_NAME}.samples.pkl")
-    ds = OMOP_Base(None, path=f"{DATABASE_NAME}.samples.pkl")
-    print(f"{DATABASE_NAME}.samples.pkl")
-    print(f"n_samples: {len(ds)}")
-    print(f"n_positiv: {ds.n_pos()}")
+    OMOP_File(f"{DATABASE_NAME}.db.pkl").save_sample_data(f"{DATABASE_NAME}.reduced_samples.pkl")
+    # ds = OMOP_Base(None, path=f"{DATABASE_NAME}.reduced_samples.pkl")
+    # print(f"{DATABASE_NAME}.samples.pkl")
+    # print(f"n_samples: {len(ds)}")
+    # print(f"n_positiv: {ds.n_pos()}")
