@@ -3,7 +3,9 @@ import os
 from fpdf import FPDF
 from settings import *
 
+global is_dummy_data 
 app = Flask(__name__, static_url_path='')
+
 data = {}
 
 
@@ -70,7 +72,7 @@ def send_css(path):
 def login():
     username = request.form["username"]
     password = request.form["password"]
-    if username == "med" and password == "1":
+    if username == user and password == pw:
         session["logged_in"] = True
         return redirect(url_for("config_page"))
     return "DENIED!"
@@ -84,12 +86,19 @@ def logout():
 def config_page():
     if not session.get("logged_in"):
         return redirect(url_for("index"))
-    handler = ConfigHandler()
-    return render_template("config.html", host=handler.get_host(), port=handler.get_port(), interval=handler.get_interval(), location = handler.get_csv_dir())
+    return render_template("config.html", host=db_host, port=db_port)
 
 @app.route("/patients", methods = ["GET"])
-def patient_page():
+def patient_page(): 
     return render_template("patient.html", data=data)
+
+@app.route("/dbconfig", methods = ["GET"])
+def dbconfig():
+    global db_host
+    global db_port
+    db_host = request.args.get("host")
+    db_port = request.args.get("port")
+    return redirect(url_for("config_page"))
 
 @app.route("/pdf", methods = ["GET"])
 def create_pdf():
@@ -145,17 +154,21 @@ def create_pdf():
             'inline; filename=results.pdf'
     return response
 
-@app.route("/cronconfig", methods= ["GET"])
-def cron_config():
-    new_interval = request.args.get("interval")
-    print(request.form)
-    print(new_interval)
-    handler = ConfigHandler()
-    handler.update_interval(new_interval)
-    cron_job.kill_job()
-    cron_job.create_cron_job(new_interval)
-    return redirect(url_for("config_page"))
-
 if __name__ == "__main__":
+
+    global db_host 
+    global db_port 
+    global db_user 
+    global db_pw 
+    global user 
+    global pw 
+    opts = get_default_opts()
+    db_user = opts.db_user
+    db_port = opts.db_port
+    db_host = opts.db_host
+    db_pw = opts.db_pw
+    user = opts.user
+    pw = opts.pw
+
     app.secret_key = os.urandom(12)
     app.run()

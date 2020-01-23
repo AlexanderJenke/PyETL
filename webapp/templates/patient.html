@@ -79,7 +79,7 @@
 		<tbody>
 			{% for row in data %}
 			<tr id="{{row}}" 
-	       {% if data[row][2] %} class="table-danger" {% else %} class="table-primary" {% endif %} onclick="togglePatient('row{{row}}')"> 
+	       {% if data[row][2] %} class="table-danger" {% else %} style="background-color:#eeeeee" {% endif %} onclick="togglePatient('row{{row}}')"> 
 				<td>{{row}}</td> 
 				<td>{{data[row][0]}}</td>
 			</tr>
