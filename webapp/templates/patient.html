@@ -25,6 +25,9 @@
   <div class="navbar-collapse " id="collapsibleNavbar">
     <ul class="navbar-nav ml-auto">
       <li class="nav-item">
+        <a class="nav-link" href="pdf">Export PDF</a>
+      </li>
+      <li class="nav-item">
         <a class="nav-link" href="config">Config</a>
       </li>
       <li class="nav-item" style="display:none">
@@ -40,9 +43,6 @@
   </div>
 </nav>
 <div class="container">
-	<script src="main.js">
-		
-	</script>
 
 	<input id ="idFilter" type="text" class="form-control" placeholder="Filter table by patient ID" onkeyup="filterTableById()" style="margin-bottom:12px"/>
 	<button class="btn btn-primary" onclick="sortTable()" style="margin-bottom:20px">Sort values by color</button>
@@ -121,6 +121,10 @@
 			{% endfor %}
 		</tbody>
 	</table>
+
+	<script src="main.js">
+		
+	</script>
 </div>
 </body>
 

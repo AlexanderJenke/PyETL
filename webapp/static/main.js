@@ -77,3 +77,4 @@ function openDialog() {
     var dialog = document.getElementById("dialog");
 
 }
+
