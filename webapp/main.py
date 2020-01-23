@@ -1,14 +1,9 @@
 from flask import Flask, render_template, request, redirect, url_for, session, make_response
-from cron import ETLCronJob
-from db import ConfigHandler
 import os
-from conn import * 
 from fpdf import FPDF
+from settings import *
 
 app = Flask(__name__, static_url_path='')
-cron_job = ETLCronJob()
-handler = ConfigHandler()
-
 data = {}
 
 
@@ -71,18 +66,11 @@ def send_js(path):
 def send_css(path):
     return send_from_directory("css", path)
 
-@app.route("/test")
-def test():
-    return render_template("test.html") 
-
 @app.route("/login", methods= ["POST"])
 def login():
     username = request.form["username"]
     password = request.form["password"]
-    handler = ConfigHandler()
-    correct_username = handler.get_username()
-    correct_password = handler.get_password()
-    if username == correct_username and password == correct_password:
+    if username == "med" and password == "1":
         session["logged_in"] = True
         return redirect(url_for("config_page"))
     return "DENIED!"
@@ -98,14 +86,6 @@ def config_page():
         return redirect(url_for("index"))
     handler = ConfigHandler()
     return render_template("config.html", host=handler.get_host(), port=handler.get_port(), interval=handler.get_interval(), location = handler.get_csv_dir())
-
-@app.route("/run", methods = ["GET"])
-def run_cron_job():
-    handler = ConfigHandler()
-    cron_job.kill_job()
-    interval = handler.get_interval()
-    cron_job.create_cron_job(interval)
-    return redirect(url_for("config_page"))
 
 @app.route("/patients", methods = ["GET"])
 def patient_page():
@@ -177,12 +157,5 @@ def cron_config():
     return redirect(url_for("config_page"))
 
 if __name__ == "__main__":
-    #conn = DBReceiver()
-    #initer = DBInitializer()
-    #conn.create_table()
-    #print(conn.receive_reasons())
-    #cron_job.kill_job()
-    #interval = handler.get_interval()
-    #cron_job.create_cron_job(interval)
     app.secret_key = os.urandom(12)
     app.run()
