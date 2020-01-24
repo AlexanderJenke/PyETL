@@ -2,59 +2,59 @@ from flask import Flask, render_template, request, redirect, url_for, session, m
 import os
 from fpdf import FPDF
 from settings import *
+from db import DB
 
-global is_dummy_data 
 app = Flask(__name__, static_url_path='')
 
 data = {}
 
 
-data["22"] = ("50", "z", True, ["The patient lies for a too long time in the bed.", "The patient has high blood pressure."])
-data["23"] = ("51", "z", True, ["The patient is quiet old.", "The patient has high blood pressure."])
-data["24"] = ("11", "z", False, [])
-data["25"] = ("2", "z", False, [])
-data["26"] = ("4", "z", False, [])
+data["22"] = ("50", True, ["The patient lies for a too long time in the bed.", "The patient has high blood pressure."])
+data["23"] = ("51", True, ["The patient is quiet old.", "The patient has high blood pressure."])
+data["24"] = ("11", False, [])
+data["25"] = ("2", False, [])
+data["26"] = ("4", False, [])
 
-data["27"] = ("50", "z", True, ["The patient lies for a too long time in the bed.", "The patient has high blood pressure."])
-data["28"] = ("50", "z", True, ["The patient lies for a too long time in the bed.", "The patient has high blood pressure."])
-data["29"] = ("50", "z", True, ["The patient lies for a too long time in the bed.", "The patient has high blood pressure."])
-data["32"] = ("50", "z", True, ["The patient lies for a too long time in the bed.", "The patient has high blood pressure."])
-data["32"] = ("50", "z", True, ["The patient lies for a too long time in the bed.", "The patient has high blood pressure."])
-data["33"] = ("51", "z", True, ["The patient is quiet old.", "The patient has high blood pressure."])
-data["34"] = ("11", "z", False, [])
-data["45"] = ("2", "z", False, [])
-data["56"] = ("4", "z", False, [])
-data["213"] = ("51", "z", True, ["The patient is quiet old.", "The patient has high blood pressure."])
-data["234"] = ("11", "z", False, [])
-data["252"] = ("2", "z", False, [])
-data["216"] = ("4", "z", False, [])
-data["243"] = ("51", "z", True, ["The patient is quiet old.", "The patient has high blood pressure."])
-data["244"] = ("11", "z", False, [])
-data["235"] = ("2", "z", False, [])
-data["256"] = ("4", "z", False, [])
-data["213"] = ("51", "z", True, ["The patient is quiet old.", "The patient has high blood pressure."])
-data["124"] = ("11", "z", False, [])
-data["125"] = ("2", "z", False, [])
-data["126"] = ("4", "z", False, [])
-data["123"] = ("51", "z", True, ["The patient is quiet old.", "The patient has high blood pressure."])
-data["1224"] = ("11", "z", False, [])
-data["25"] = ("2", "z", False, [])
-data["24126"] = ("4", "z", False, [])
-data["22"] = ("50", "z", True, ["The patient lies for a too long time in the bed.", "The patient has high blood pressure."])
-data["23"] = ("51", "z", True, ["The patient is quiet old.", "The patient has high blood pressure."])
-data["24"] = ("11", "z", False, [])
-data["25"] = ("2", "z", False, [])
-data["26"] = ("4", "z", False, [])
-data["22"] = ("50", "z", True, ["The patient lies for a too long time in the bed.", "The patient has high blood pressure."])
-data["23"] = ("51", "z", True, ["The patient is quiet old.", "The patient has high blood pressure."])
-data["24"] = ("11", "z", False, [])
-data["25"] = ("2", "z", False, [])
-data["26"] = ("4", "z", False, [])
-data["22"] = ("50", "z", True, ["The patient lies for a too long time in the bed.", "The patient has high blood pressure."])
-data["23"] = ("51", "z", True, ["The patient is quiet old.", "The patient has high blood pressure."])
-data["24"] = ("11", "z", False, [])
-data["25"] = ("2", "z", False, [])
-data["26"] = ("4", "z", False, [])
+data["27"] = ("50", True, ["The patient lies for a too long time in the bed.", "The patient has high blood pressure."])
+data["28"] = ("50", True, ["The patient lies for a too long time in the bed.", "The patient has high blood pressure."])
+data["29"] = ("50", True, ["The patient lies for a too long time in the bed.", "The patient has high blood pressure."])
+data["32"] = ("50", True, ["The patient lies for a too long time in the bed.", "The patient has high blood pressure."])
+data["32"] = ("50", True, ["The patient lies for a too long time in the bed.", "The patient has high blood pressure."])
+data["33"] = ("51", True, ["The patient is quiet old.", "The patient has high blood pressure."])
+data["34"] = ("11", False, [])
+data["45"] = ("2", False, [])
+data["56"] = ("4", False, [])
+data["213"] = ("51", True, ["The patient is quiet old.", "The patient has high blood pressure."])
+data["234"] = ("11", False, [])
+data["252"] = ("2", False, [])
+data["216"] = ("4", False, [])
+data["243"] = ("51", True, ["The patient is quiet old.", "The patient has high blood pressure."])
+data["244"] = ("11", False, [])
+data["235"] = ("2", False, [])
+data["256"] = ("4", False, [])
+data["213"] = ("51", True, ["The patient is quiet old.", "The patient has high blood pressure."])
+data["124"] = ("11", False, [])
+data["125"] = ("2", False, [])
+data["126"] = ("4", False, [])
+data["123"] = ("51", True, ["The patient is quiet old.", "The patient has high blood pressure."])
+data["1224"] = ("11", False, [])
+data["25"] = ("2", False, [])
+data["24126"] = ("4", False, [])
+data["22"] = ("50", True, ["The patient lies for a too long time in the bed.", "The patient has high blood pressure."])
+data["23"] = ("51", True, ["The patient is quiet old.", "The patient has high blood pressure."])
+data["24"] = ("11", False, [])
+data["25"] = ("2", False, [])
+data["26"] = ("4", False, [])
+data["22"] = ("50", True, ["The patient lies for a too long time in the bed.", "The patient has high blood pressure."])
+data["23"] = ("51", True, ["The patient is quiet old.", "The patient has high blood pressure."])
+data["24"] = ("11", False, [])
+data["25"] = ("2", False, [])
+data["26"] = ("4", False, [])
+data["22"] = ("50", True, ["The patient lies for a too long time in the bed.", "The patient has high blood pressure."])
+data["23"] = ("51", True, ["The patient is quiet old.", "The patient has high blood pressure."])
+data["24"] = ("11", False, [])
+data["25"] = ("2", False, [])
+data["26"] = ("4", False, [])
 
 @app.route("/")
 def index():
@@ -89,7 +89,15 @@ def config_page():
     return render_template("config.html", host=db_host, port=db_port)
 
 @app.route("/patients", methods = ["GET"])
-def patient_page(): 
+def patient_page():
+    global is_dummy_data
+    if not is_dummy_data:
+        global db_host
+        global db_port
+        global db_user
+        global db_port
+        conn = DB(host=host, port=db_port, user=db_user, password=db_pw) 
+        # data = conn.get_patients()
     return render_template("patient.html", data=data)
 
 @app.route("/dbconfig", methods = ["GET"])
@@ -121,7 +129,7 @@ def create_pdf():
         if value[2]:
             pdf.set_fill_color(237, 150, 158)
         new_lines = ""
-        for i in range(len(value[3])):
+        for i in range(len(value[2])):
             new_lines += "\n" 
         x = pdf.get_x() + col_width
         y = pdf.get_y()
@@ -141,7 +149,7 @@ def create_pdf():
         if value[2]:
             pdf.set_font("Arial", "B", size=10)
             pdf.set_font("Arial", size=10)
-            for reason in value[3]:
+            for reason in value[2]:
                 if len(reason) > 125:
                     reason = reason[:125]
                 diagnosises += reason + "\n"
@@ -155,7 +163,7 @@ def create_pdf():
     return response
 
 if __name__ == "__main__":
-
+    global is_dummy_data 
     global db_host 
     global db_port 
     global db_user 
@@ -163,6 +171,7 @@ if __name__ == "__main__":
     global user 
     global pw 
     opts = get_default_opts()
+    is_dummy_data = opts.dummy_data
     db_user = opts.db_user
     db_port = opts.db_port
     db_host = opts.db_host

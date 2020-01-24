@@ -91,11 +91,11 @@
 						<span style="font-size:large;margin-bottom:10px">The algorithm found there is a potential risk that the patient may or will 
 							may suffer decubitus. </span></br>
 						<!--ul class="list-group">
-							{% for i in data[row][3] %}
+							{% for i in data[row][2] %}
 							<li class="list-group-item">{{i}}</li>
 							{% endfor %}
                                         	</ul-->
-						{% for i in data[row][3] %}
+						{% for i in data[row][2] %}
 						<span>{{i}}</span></br>
 						{% endfor %}
 					</div>
@@ -109,7 +109,7 @@
 						<span style="font-size:large;margin-bottom:10px">It was not detected that the patient suffers or will suffer from decubitus. 
 						However, there is still a residual risk, as the algorithm is not infallible.</span></br>
 						<!--ul class="list-group">
-							{% for i in data[row][3] %}
+							{% for i in data[row][2] %}
 							<li class="list-group-item">{{i}}</li>
 							{% endfor %}
                                         	</ul-->
