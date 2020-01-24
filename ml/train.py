@@ -7,14 +7,16 @@ from tqdm import tqdm
 import tensorboardX
 import numpy as np
 
-from dataset import OMOP_Base
+from dataset import OMOP_Samples
 from model import *
 
 N_EPOCHS = 1000
 MAX_LR = 1e-3
-BATCH_SIZE = 125
+BATCH_SIZE = 1000
 
 epsilon = 1e-16
+
+name = f"minimal_noMeas_svm_LR{MAX_LR:.0e}_BS{BATCH_SIZE}_L-f1-wmse-r0.01_Ep{N_EPOCHS}"
 
 
 def f1loss(input: torch.tensor, target: torch.tensor):
@@ -22,7 +24,7 @@ def f1loss(input: torch.tensor, target: torch.tensor):
 
 
 def f1_score(input: torch.tensor, target: torch.tensor):
-    pred = input  # .round()
+    pred = torch.sigmoid((input - 0.5) * 10)
     assert (pred.min() >= 0 and pred.max() <= 1)
     tp = torch.sum(pred * target)
     fp = torch.sum((1 - target) * pred)
@@ -55,21 +57,14 @@ class wMSELoss:
 if __name__ == '__main__':
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-    trainset = OMOP_Base(None, path="synpuf_cdm.samples.pkl")
+    trainset = OMOP_Samples("synpuf_cdm.noMeas.minimal.pkl")
     trainloader = DataLoader(trainset, batch_size=BATCH_SIZE, shuffle=True, pin_memory=True, num_workers=8)
 
     i = len(trainset[0][0])
+    print(i)
 
-    # model = N_FC(input_size=i,
-    #              layers=[[i, 200],
-    #                      [1],
-    #                      # [i // 2, i // 4],
-    #                      # [i // 8, i // 16],
-    #                      # [i // 32, 1],
-    #                      ]
-    #              ).to(device)
-
-    model = SVM(len(trainset[0][0])).to(device)
+    model = SVM(i).to(device)
+    # model = FC_N_FC(input_size=i, n=200)
 
     optim = Adam(model.parameters(), lr=MAX_LR)
     lr_sched = OneCycleLR(optim, max_lr=MAX_LR, epochs=N_EPOCHS, steps_per_epoch=len(trainloader))
@@ -78,7 +73,7 @@ if __name__ == '__main__':
     loss_wMSE = wMSELoss(weight=0.98)
     loss_MSE = MSELoss()
 
-    log = tensorboardX.SummaryWriter()
+    log = tensorboardX.SummaryWriter(f"runs/{name}")
 
     fp, tp, fn = 0, 0, 0
 
@@ -99,9 +94,7 @@ if __name__ == '__main__':
             wmse = loss_wMSE(output, labels)
             mse = loss_MSE(output, labels)
 
-            loss = (torch.tensor(1) - f1) + \
-                   wmse + \
-                   (torch.tensor(1) - r) / 100
+            loss = (torch.tensor(1) - f1) + wmse + (torch.tensor(1) - r) * 0.01
 
             mean_loss.append(loss.item())
             loss.backward()
@@ -115,10 +108,10 @@ if __name__ == '__main__':
         log.add_scalar("F1-Score", f1, global_step=epoch)
         log.add_scalar("Double F1-Score", df1, global_step=epoch)
 
-        print(f"F1-Score: {f1:.5f}, {p:.5f}, {r:.5f}, {preds_cat.sum().item():.0f} {df1:.5f}")
+        print(f"F1-Score: {f1:.5f}, {p:.5f}, {r:.5f}, {(preds_cat> 0.5).float().sum().item():.0f} {df1:.5f}")
 
         log.add_scalar("Loss", np.mean(mean_loss), global_step=epoch)
         log.add_scalar("LR", lr_sched.get_lr(), global_step=epoch)
 
-    model.save("svm.pt")
+    model.save(f"{name}.pt")
     log.close()

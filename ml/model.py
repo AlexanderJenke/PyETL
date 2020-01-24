@@ -13,7 +13,7 @@ class SaveLoad(nn.Module):
         for key in state_dict:
             if key.endswith("weight"):
                 self.__getattr__(key.split('.')[0]).__init__(state_dict[key].shape[1], state_dict[key].shape[0])
-                print(key.split('.')[0], state_dict[key].shape)
+                # print(key.split('.')[0], state_dict[key].shape)
 
         # load params
         self.load_state_dict(state_dict)
@@ -100,4 +100,18 @@ class N_FC(SaveLoad):
             for layer in blocks:
                 x = layer(x)
             x = self.activation(x)
+        return x
+
+
+class FC_N_FC(SaveLoad):
+    def __init__(self, input_size, n):
+        super(FC_N_FC, self).__init__()
+        self.fc1 = nn.Linear(input_size, n)
+        self.fc2 = nn.Linear(n, 1)
+
+    def forward(self, x):
+        x = self.fc1(x)
+        x = F.leaky_relu(x)
+        x = self.fc2(x)
+        x = F.softsign(x)
         return x

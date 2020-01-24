@@ -7,25 +7,13 @@ from sys import stderr
 from tqdm import tqdm
 from datetime import date, timedelta
 import numpy as np
+import pickle_workaround as pkl
 
-RELEVANT_DOMAIN_IDS = ["Observation", "Procedure", "Condition", "Measurement"]
+RELEVANT_DOMAIN_IDS = ["Observation", "Procedure", "Condition"]  # , "Measurement"]
 DATABASE_NAME = "synpuf_cdm"
 
 
 class OMOP_Base(torch.utils.data.Dataset):
-    def __init__(self, data, path=None):
-        if path is None:
-            self.data = self._prepare_data(data)
-        else:
-            with open(path, "rb") as f:
-                d = pickle.load(f)
-                if "samples" in d:
-                    self.data = d["samples"]
-                    self.features_lut = d["features_lut"]
-                    self.alphabet = d["alphabet"]
-                else:
-                    self.data = d
-
     def n_pos(self):
         return sum([s[1] for s in self.data])
 
@@ -48,7 +36,7 @@ class OMOP_Base(torch.utils.data.Dataset):
         features_map = sorted(list(set(np.concatenate(
             [list(patient['datapoints_d'].keys())
              for patient in patient_data if len(patient['datapoints_d'])
-             if bool(set(patient['datapoints_d'].keys()) & labels)
+             # if bool(set(patient['datapoints_d'].keys()) & labels)
              ]))))
 
         features_lut = {key: features_map.index(key) + 3 for key in features_map}
@@ -67,24 +55,32 @@ class OMOP_Base(torch.utils.data.Dataset):
                     timeline[timestamp].append(datapoint)
 
             timestamps = sorted(list(timeline.keys()))
+            datapoints = []
             for i in range(len(timestamps) - 1):
                 label = bool(set(d['concept_id'] for d in timeline[timestamps[i + 1]]) & labels)
                 features = np.zeros(len(features_map) + 3)
                 features[0] = int(patient['gender_id'] == 8507)  # is male?
                 features[1] = int(patient['gender_id'] == 8532)  # is female?
                 features[2] = date.today().year - patient['year_of_birth']  # age
-                for j in range(i + 1):
-                    for datapoint in timeline[timestamps[i + 1]]:
-                        if datapoint['concept_id'] not in features_map:
-                            continue
-                        if "enddate" in datapoint and \
-                                (datapoint['enddate'] - date(1970, 1, 1)) / timedelta(seconds=1) < timestamps[i]:
-                            continue
-                        if datapoint['value'] is None:
-                            features[features_lut[datapoint['concept_id']]] = 1
-                        else:
-                            features[features_lut[datapoint['concept_id']]] = datapoint['value']
-                data.append((features, label))
+
+                datapoints += timeline[timestamps[i]]
+                new_feature = False
+                for datapoint in datapoints:
+                    if datapoint['concept_id'] not in features_map:
+                        continue
+                    if "enddate" in datapoint and \
+                            (datapoint['enddate'] - date(1970, 1, 1)) / timedelta(seconds=1) < timestamps[i]:
+                        continue
+
+                    new_feature = True
+                    if datapoint['value'] is None:
+                        features[features_lut[datapoint['concept_id']]] = 1
+                    else:
+                        features[features_lut[datapoint['concept_id']]] = datapoint['value']
+
+                if new_feature:
+                    data.append((features, label))
+
         return data
 
     def __getitem__(self, item):
@@ -95,11 +91,12 @@ class OMOP_Base(torch.utils.data.Dataset):
 
     def save_sample_data(self, path):
         print(f"saving data to {path}")
-        obj = {"samples": self.data,
-               "features_lut": self.features_lut,
-               "alphabet": self.alphabet}
-        with open(path, 'wb') as file:
-            pickle.dump(obj, file)
+
+        d = {"samples": self.data,
+             "features_lut": self.features_lut,
+             "alphabet": self.alphabet}
+
+        pkl.save(d, path)
 
 
 class OMOP_DB(OMOP_Base):
@@ -117,7 +114,7 @@ class OMOP_DB(OMOP_Base):
             # save db data to file
             self.save_db_data(path)
 
-        super().__init__(self.db_data)
+        self.data = self._prepare_data(self.db_data)
 
     def _load_db(self):
         print(f"loading data from database ({self.conn.dsn})")
@@ -223,7 +220,7 @@ class OMOP_DB(OMOP_Base):
 
 class OMOP_File(OMOP_Base):
     def __init__(self, path):
-        super().__init__(self._load_file(path))
+        self.data = self._prepare_data(self._load_file(path))
 
     @staticmethod
     def _load_file(path):
@@ -232,10 +229,64 @@ class OMOP_File(OMOP_Base):
             return pickle.load(file)
 
 
+class OMOP_Samples(OMOP_Base):
+    def __init__(self, path):
+        print(f"loading data from {path}")
+        d = pkl.load(path)
+        self.data = d["samples"]
+        self.features_lut = d["features_lut"]
+        self.alphabet = d["alphabet"]
+
+
+def reduced2minimal(ds, new_file):
+    feat = np.zeros((len(ds[0][0])))
+    for s, l in ds:
+        notnull = s != 0
+        if l:
+            feat += notnull.numpy()
+
+    n_feat = sum(feat != 0)
+    print(n_feat)
+
+    feat_lut = {}
+
+    count = 3
+
+    for key in sorted(ds.features_lut, key=lambda x: ds.features_lut[x]):
+        if (feat != 0)[ds.features_lut[key]]:
+            feat_lut[key] = count
+            count += 1
+
+    ft_l = []
+    for key in feat_lut:
+        ft_l.append((ds.features_lut[key], feat_lut[key]))
+
+    data = []
+    for feature_old, label in tqdm(ds):
+        feature_new = np.zeros(n_feat)
+        feature_new[:3] = feature_old[:3]
+        for f, t in ft_l:
+            feature_new[t] = feature_old[f]
+
+        data.append((feature_new, label))
+
+    ds.data = data
+    ds.features_lut = feat_lut
+    ds.save_sample_data(new_file)
+
+    print(len(ds.features_lut), ds.data[0][0].shape)
+
+
 if __name__ == '__main__':
+    # ds = OMOP_File("synpuf_cdm.noMeas.db.pkl")
+    ds = OMOP_Samples("synpuf_cdm.noMeas.reduced.pkl")
+    reduced2minimal(ds, "synpuf_cdm.noMeas.minimal.pkl")
+    exit()
+
     # OMOP_DB(path=f"{DATABASE_NAME}.db.pkl")
-    OMOP_File(f"{DATABASE_NAME}.db.pkl").save_sample_data(f"{DATABASE_NAME}.reduced_samples.pkl")
+    # OMOP_File(f"{DATABASE_NAME}.db.pkl").save_sample_data(f"{DATABASE_NAME}.reduced.")
     # ds = OMOP_Base(None, path=f"{DATABASE_NAME}.reduced_samples.pkl")
     # print(f"{DATABASE_NAME}.samples.pkl")
     # print(f"n_samples: {len(ds)}")
     # print(f"n_positiv: {ds.n_pos()}")
+    # ds = OMOP_Samples("synpuf_cdm.minimal_noMeas.pkl")
