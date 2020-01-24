@@ -50,6 +50,7 @@ if __name__ == "__main__":
                         month_of_birth=str(last_record["geburtsmonat"]),
                         race_concept_id="8552",  # Unknown
                         ethnicity_concept_id="38003564",  # Non-Hispanic
+                        gender_source_value=last_record["geschlecht"],
                         location=location,
                         )
 
@@ -236,7 +237,7 @@ if __name__ == "__main__":
                                                            code_version=icd_version)
                     # add lokalisation
                     if str(row["lokalisation"]) != "nan":
-                        person.add_observation(observation_concept_id= omop.LOCALISATION_LUT.get(str(row['lokalisation'])),
+                        person.add_observation(observation_concept_id=omop.LOCALISATION_LUT.get(str(row['lokalisation'])),
                                                observation_date=fall_aufnahmedatum[:8],
                                                observation_type_concept_id="38000280",  # Observation recorded from EHR
                                                observation_source_value=str(row['lokalisation']),
@@ -317,8 +318,8 @@ if __name__ == "__main__":
                 raise NotImplementedError(f"'{domain_id}' in the OPS.csv is not supported!")
 
         # insert into database -----------------------------------------------------------------------------------------
-        res = person.insert_into_db()
-        for sql in res:
-            # print(sql)
-            omop.insert(sql)
-        # omop.commit()  # TODO enable commit of whole person or activate commits on omop-init
+        sqls = person.insert_into_db()
+        for sql in sqls:
+            id = omop.select(sql)
+            print(id[0][0], sql)
+        omop.commit()  # TODO enable commit of whole person or activate commits on omop-init

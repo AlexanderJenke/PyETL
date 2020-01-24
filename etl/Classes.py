@@ -6,6 +6,7 @@ class Person:
         self.observations = []  # -> table: observation
         self.conditions = []  # -> table: condition_occurrence
         self.procedures = []  # -> table: procedure_occurrence
+        self.fact_relations = []  # -> table: fact_relationship
 
     def add_visit(self,
                   visit_occurrence_id,
@@ -102,12 +103,21 @@ class Person:
         values = ""
         for key, value in self.person.items():
             if key == "location":
-                continue  # TODO Add location
+                queries += f"""
+DO $do$ BEGIN IF NOT EXISTS(Select * from  p21_cdm.location WHERE city='{value['city']}' and zip='{value['zip']}') THEN
+insert into  p21_cdm.location (city, zip) VALUES ('{value['city']}', '{value['zip']}');
+END IF; END; $do$""",
+                continue
 
             keys += f"{key},"
             values += f"'{value}',"
-        queries += f"INSERT INTO p21_cdm.person ({keys[:-1]}) VALUES({values[:-1]})",
 
+        queries += f"""INSERT INTO p21_cdm.person (location_id, {keys[:-1]}) 
+                       VALUES((SELECT location_id 
+                               FROM p21_cdm.location
+                               WHERE city='{self.person['location']['city']}' 
+                               and zip='{self.person['location']['zip']}'), {values[:-1]}) 
+                       RETURNING person_id""",
 
         for data, tablename in [(self.measurements, "measurement"),
                                 (self.observations, "observation"),
@@ -123,6 +133,5 @@ class Person:
                     keys += f"{key},"
                     values += f"'{value}',"
 
-                queries += f"INSERT INTO p21_cdm.{tablename}({keys[:-1]}) VALUES({values[:-1]})",
-
+                queries += f"INSERT INTO p21_cdm.{tablename}({keys[:-1]}) VALUES({values[:-1]}) RETURNING {tablename}_id",
         return queries
