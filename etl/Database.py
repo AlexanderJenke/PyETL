@@ -43,7 +43,11 @@ class OMOP:
 
     def select(self, sql: str):
         self.cursor.execute(sql)
-        return self.cursor.fetchall()
+        try:
+            res = self.cursor.fetchall()
+            return res
+        except:
+            return [(None,)]
 
     def insert(self, sql: str):
         self.cursor.execute(sql)
@@ -136,8 +140,21 @@ class OMOP:
 
 
 if __name__ == '__main__':
-    """Connection-Test"""
-    omop = OMOP()
-    tables = omop.select("""select tablename From pg_catalog.pg_tables Where schemaname = 'p21_cdm'""")
-    for table in tables:
-        print(table[0])
+    """Clear Database"""
+    database = "p21_cdm"
+    tables = ["condition_occurrence",
+              "fact_relationship",
+              "location",
+              "measurement",
+              "observation",
+              "person",
+              "procedure_occurrence",
+              "visit_occurrence",
+              ]
+
+    if input(f"Do you realy want to clear the Tables {tables} \nin the Database '{database}'? \nType 'Yes'.\n") == "Yes":
+        omop = OMOP()
+        for table in tables:
+            omop.insert(f"DELETE FROM {database}.{table}")
+        omop.commit()
+        print("Database ist now empty again.")
