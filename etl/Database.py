@@ -41,6 +41,15 @@ class OMOP:
                                              }
                                     )
 
+        self.DIAGNOSENSICHERHEIT_LUT = LUT(default="0",
+                                           name="DIAGNOSENSICHERHEIT_LUT",
+                                           content={"A": "37116688",  # Diagnosis of exclusion
+                                                    "V": "4033240",  # Preliminary diagnosis
+                                                    "Z": "4284245",  # Asymptomatic diagnosis of
+                                                    "G": "4032659",  # Established diagnosis
+                                                    }
+                                           )
+
     def select(self, sql: str):
         self.cursor.execute(sql)
         try:
