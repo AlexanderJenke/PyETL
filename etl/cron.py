@@ -1,9 +1,20 @@
 from crontab import CronTab
-from settings import get_default_opts
 import getpass
 import os
+from optparse import OptionParser
 
-class ETLCronJob: 
+
+def get_default_opts():
+    parser = OptionParser()
+    parser.add_option("--db_host", dest="db_host", default="localhost")
+    parser.add_option("--db_port", dest="db_port", default="5432")
+    parser.add_option("--interval", dest="interval", default="* * * * *")
+    parser.add_option("--csv_dir", dest="csv_dir", default="Daten",
+                      help="Path to the directory containing the newest csv files")
+    return parser.parse_args()[0]
+
+
+class ETLCronJob:
 
     def __init__(self, command):
         self.user = getpass.getuser()
@@ -24,11 +35,10 @@ class ETLCronJob:
         self.my_cron.write()
 
 
-if __name__ == "__main__": 
+if __name__ == "__main__":
     opts = get_default_opts()
     print(opts)
     command = f"python3 {os.getcwd()}/main.py {opts.csv_dir} --db_host={opts.db_host} --db_port={opts.db_port}"
     cronjob = ETLCronJob(command)
     cronjob.kill_job()
     cronjob.create_cron_job(opts.interval)
-
