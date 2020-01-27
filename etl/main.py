@@ -69,7 +69,8 @@ if __name__ == "__main__":
                              admitting_source_value=str(row['aufnahmegrund']),
                              discharge_to_source_value=str(row['entlassungsgrund']),
                              care_site_name=
-                             fab_pd[fab_pd['KH-internes-Kennzeichen'] == int(row['kh_internes_kennzeichen'])]['FAB'].iloc[-1]
+                             fab_pd[fab_pd['KH-internes-Kennzeichen'] == int(row['kh_internes_kennzeichen'])][
+                                 'FAB'].iloc[-1]
                              )
 
         internal_ids = [key for key in fall_df["kh_internes_kennzeichen"]]  # associated internal ids for patient
@@ -169,6 +170,14 @@ if __name__ == "__main__":
                     optional['qualifier_source_value'] = str(row["diagnosensicherheit"])
                     # TODO add diagnosensicherheit
 
+                person.add_observation(observation_concept_id=str(omop.ICD10GM2SNOMED[concept_id]),
+                                       observation_date=fall_aufnahmedatum[:8],
+                                       observation_type_concept_id="38000280",  # Observation recorded from EHR
+                                       observation_source_concept_id=str(concept_id),
+                                       observation_source_value=str(row['icd_kode']),
+                                       **optional
+                                       )
+
                 # add lokalisation
                 if str(row["lokalisation"]) != "nan":
                     person.add_observation(observation_concept_id=omop.LOCALISATION_LUT.get(str(row['lokalisation'])),
@@ -177,14 +186,9 @@ if __name__ == "__main__":
                                            observation_source_value=str(row['lokalisation']),
                                            value_as_string=str(row['lokalisation']),
                                            )
-
-                person.add_observation(observation_concept_id=str(omop.ICD10GM2SNOMED[concept_id]),
-                                       observation_date=fall_aufnahmedatum[:8],
-                                       observation_type_concept_id="38000280",  # Observation recorded from EHR
-                                       observation_source_concept_id=str(concept_id),
-                                       observation_source_value=str(row['icd_kode']),
-                                       **optional
-                                       )
+                    # add fact relationship
+                    person.add_fact_relationship('o', person.observations[-2],  # observation
+                                                 'o', person.observations[-1])  # localisation
                 #  add sekundaer_kode
                 if str(row["sekundaer_kode"]) != "nan":
                     concept_id = omop.get_valid_concept_id(LUT=omop.ICD10GM_LUT,
@@ -212,22 +216,15 @@ if __name__ == "__main__":
                             value_as_string=str(row['lokalisation']),
                         )
 
-                    # TODO add FACT_RELATIONSHIPs
+                        # add fact relationship
+                        person.add_fact_relationship('o', person.observations[-2],  # observation
+                                                     'o', person.observations[-1])  # localisation
 
 
             elif domain_id == "Condition":
                 # TODO add diagnosensicherheit
                 datetime = f"{fall_aufnahmedatum[0:4]}-{fall_aufnahmedatum[4:6]}-{fall_aufnahmedatum[6:8]} " \
                            f"{fall_aufnahmedatum[8:10]}:{fall_aufnahmedatum[10:12]}:00"
-
-                # add lokalisation
-                if str(row["lokalisation"]) != "nan":
-                    person.add_observation(observation_concept_id=omop.LOCALISATION_LUT.get(str(row['lokalisation'])),
-                                           observation_date=fall_aufnahmedatum[:8],
-                                           observation_type_concept_id="38000280",  # Observation recorded from EHR
-                                           observation_source_value=str(row['lokalisation']),
-                                           value_as_string=str(row['lokalisation']),
-                                           )
 
                 person.add_condition(condition_concept_id=str(omop.ICD10GM2SNOMED[concept_id]),
                                      condition_start_date=fall_aufnahmedatum[:8],
@@ -237,12 +234,33 @@ if __name__ == "__main__":
                                      condition_source_value=str(row['icd_kode']),
                                      )
 
+                # add lokalisation
+                if str(row["lokalisation"]) != "nan":
+                    person.add_observation(observation_concept_id=omop.LOCALISATION_LUT.get(str(row['lokalisation'])),
+                                           observation_date=fall_aufnahmedatum[:8],
+                                           observation_type_concept_id="38000280",  # Observation recorded from EHR
+                                           observation_source_value=str(row['lokalisation']),
+                                           value_as_string=str(row['lokalisation']),
+                                           )
+                    # add fact relationship
+                    person.add_fact_relationship('c', person.conditions[-1],  # condition
+                                                 'o', person.observations[-1])  # localisation
+
                 #  add sekundaer_kode
                 if str(row["sekundaer_kode"]) != "nan":
                     concept_id = omop.get_valid_concept_id(LUT=omop.ICD10GM_LUT,
                                                            code=str(row['sekundaer_kode'])[:-1],
                                                            # remove '*' at the end of code
                                                            code_version=icd_version)
+
+                    person.add_condition(condition_concept_id=str(omop.ICD10GM2SNOMED[concept_id]),
+                                         condition_start_date=fall_aufnahmedatum[:8],
+                                         condition_start_datetime=datetime,
+                                         condition_type_concept_id=omop.CONDITION_TYPE_LUT.get("ND"),  # always ND
+                                         condition_source_concept_id=str(concept_id),
+                                         condition_source_value=str(row['sekundaer_kode']),
+                                         )
+
                     # add lokalisation
                     if str(row["lokalisation"]) != "nan":
                         person.add_observation(
@@ -253,14 +271,9 @@ if __name__ == "__main__":
                             value_as_string=str(row['lokalisation']),
                         )
 
-                    person.add_condition(condition_concept_id=str(omop.ICD10GM2SNOMED[concept_id]),
-                                         condition_start_date=fall_aufnahmedatum[:8],
-                                         condition_start_datetime=datetime,
-                                         condition_type_concept_id=omop.CONDITION_TYPE_LUT.get("ND"),  # always ND
-                                         condition_source_concept_id=str(concept_id),
-                                         condition_source_value=str(row['sekundaer_kode']),
-                                         )
-                # TODO add FACT_RELATIONSHIPs
+                        # add fact relationship
+                        person.add_fact_relationship('c', person.conditions[-1],  # condition
+                                                     'o', person.observations[-1])  # localisation
 
             elif domain_id == "Measurement":
                 # Not Handled
@@ -306,6 +319,9 @@ if __name__ == "__main__":
                                            observation_source_value=str(row['lokalisation']),
                                            value_as_string=str(row['lokalisation']),
                                            )
+                    # add fact relationship
+                    person.add_fact_relationship('p', person.procedures[-1],  # procedure
+                                                 'o', person.observations[-1])  # localisation
 
 
             elif domain_id == "Observation":
@@ -327,8 +343,4 @@ if __name__ == "__main__":
                 raise NotImplementedError(f"'{domain_id}' in the OPS.csv is not supported!")
 
         # insert into database -----------------------------------------------------------------------------------------
-        sqls = person.insert_into_db()
-        for sql in sqls:
-            id = omop.select(sql)
-            # print(id[0][0], sql)
-        omop.commit()  # TODO enable commit of whole person or activate commits on omop-init
+        person.insert_into_db(omop)

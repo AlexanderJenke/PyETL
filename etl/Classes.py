@@ -95,56 +95,61 @@ class Person:
 
         self.procedures.append(procedure_d)
 
-    def insert_into_db(self):
-        queries = ()
+    def add_fact_relationship(self, table_from: str, entry_from: dict, table_to: str, entry_to: dict):
+        table_lut = {'p': "10",  # procedure
+                     'c': "19",  # condition
+                     'm': "21",  # measurement
+                     'o': "27"}  # observation
+        self.fact_relations.append((table_lut[table_from], entry_from, table_lut[table_to], entry_to))
 
-        # SQL querys to insert person
+    def insert_into_db(self, database):
+        # insert person
         keys = ""
         values = ""
         for key, value in self.person.items():
             # location
             if key == "location":
                 # ensure location is in table
-                queries += f"""DO $do$ BEGIN IF NOT EXISTS (SELECT * FROM p21_cdm.location WHERE city='{value['city']}' 
+                database.select(f"""DO $do$ BEGIN IF NOT EXISTS (SELECT * FROM p21_cdm.location WHERE city='{value['city']}' 
                                AND zip='{value['zip']}') THEN INSERT INTO  p21_cdm.location (city, zip) 
-                               VALUES ('{value['city']}', '{value['zip']}'); END IF; END; $do$""",
+                               VALUES ('{value['city']}', '{value['zip']}'); END IF; END; $do$""")
                 continue
 
             keys += f"{key},"
             values += f"'{value}',"
 
-        queries += f"""INSERT INTO p21_cdm.person (location_id, {keys[:-1]}) 
-                       VALUES((SELECT location_id 
-                               FROM p21_cdm.location
-                               WHERE city='{self.person['location']['city']}' 
-                               and zip='{self.person['location']['zip']}'), {values[:-1]}) 
-                       RETURNING person_id""",
+        database.select(f"""INSERT INTO p21_cdm.person (location_id, {keys[:-1]}) 
+                            VALUES((SELECT location_id 
+                                    FROM p21_cdm.location
+                                    WHERE city='{self.person['location']['city']}' 
+                                    and zip='{self.person['location']['zip']}'), 
+                                   {values[:-1]})""")
 
-        # SQL querys to insert visits
+        # insert visits
         for visit in self.visits:
             keys = "person_id,"
             values = f"'{self.person['person_id']}',"
             for key, value in visit.items():
                 if key == "care_site_name":
                     # ensure care site is in table
-                    queries += f"""DO $do$ BEGIN IF NOT EXISTS (SELECT * 
+                    database.select(f"""DO $do$ BEGIN IF NOT EXISTS (SELECT * 
                                                                 FROM p21_cdm.care_site 
                                                                 WHERE care_site_name='{value}') 
                                            THEN INSERT INTO  p21_cdm.care_site (care_site_name) 
-                                           VALUES ('{value}'); END IF; END; $do$""",
+                                           VALUES ('{value}'); END IF; END; $do$""")
                     continue
 
                 keys += f"{key},"
                 values += f"'{value}',"
 
-            queries += f"""INSERT INTO p21_cdm.visit_occurrence (care_site_id, {keys[:-1]}) 
-                           VALUES((SELECT care_site_id
-                                   FROM p21_cdm.care_site
-                                   WHERE care_site_name='{visit['care_site_name']}'),
-                                  {values[:-1]}) 
-                           RETURNING visit_occurrence_id""",
+            database.select(f"""INSERT INTO p21_cdm.visit_occurrence (care_site_id, {keys[:-1]}) 
+                                VALUES((SELECT care_site_id
+                                        FROM p21_cdm.care_site
+                                        WHERE care_site_name='{visit['care_site_name']}'),
+                                       {values[:-1]}) 
+                                RETURNING visit_occurrence_id""")
 
-        # SQL querys to insert measurements, observations, conditions & procedures
+        # insert measurements, observations, conditions & procedures
         for data, tablename in [(self.measurements, "measurement"),
                                 (self.observations, "observation"),
                                 (self.conditions, "condition_occurrence"),
@@ -157,5 +162,20 @@ class Person:
                     keys += f"{key},"
                     values += f"'{value}',"
 
-                queries += f"INSERT INTO p21_cdm.{tablename}({keys[:-1]}) VALUES({values[:-1]}) RETURNING {tablename}_id",
-        return queries
+                entry["sql_id"] = database.select(f"""INSERT INTO p21_cdm.{tablename}({keys[:-1]})
+                                                      VALUES({values[:-1]}) RETURNING {tablename}_id""")[0][0]
+
+        # insert fact_relationships
+        for table1, entry1, table2, entry2 in self.fact_relations:
+            # 44818890 = Finding associated with (SNOMED)
+            database.select(f"""INSERT INTO p21_cdm.fact_relationship(domain_concept_id_1, fact_id_1, 
+                                                                     domain_concept_id_2, fact_id_2, 
+                                                                     relationship_concept_id)
+                                VALUES('{table1}','{entry1['sql_id']}','{table2}','{entry2['sql_id']}','44818890')""")
+            # 44818792 = Associated with finding (SNOMED)
+            database.select(f"""INSERT INTO p21_cdm.fact_relationship(domain_concept_id_1, fact_id_1, 
+                                                                      domain_concept_id_2, fact_id_2, 
+                                                                      relationship_concept_id)
+                                VALUES('{table2}','{entry2['sql_id']}','{table1}','{entry1['sql_id']}','44818792')""")
+
+        database.commit()
