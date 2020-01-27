@@ -1,5 +1,4 @@
 import pandas as pd
-# from sys import argv
 import os
 from Classes import Person
 from Database import OMOP
@@ -19,7 +18,7 @@ def get_opts_and_args():
 
 
 if __name__ == "__main__":
-    opts, args = get_opts_and_args()
+    opts, args = get_opts_and_args()  # get options and arguments
     csv_dir = args[0]  # Path to csv files
 
     # load csv files
@@ -38,7 +37,7 @@ if __name__ == "__main__":
     ops_pd = pd.read_csv(ops_csv, delimiter=CSV_DELIMITER)
 
     # init database connector
-    omop = OMOP(do_commits=False)
+    omop = OMOP(host=opts.db_host, port=opts.db_port, do_commits=False)
 
     # add one patient after another
     for id in tqdm(fall_pd["patienten_nummer"].unique()):
