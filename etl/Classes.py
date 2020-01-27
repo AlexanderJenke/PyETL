@@ -43,6 +43,7 @@ class Person:
         measurement_d["measurement_type_concept_id"] = measurement_type_concept_id
 
         self.measurements.append(measurement_d)
+        return measurement_d
 
     def add_observation(self,
                         observation_concept_id,
@@ -58,7 +59,13 @@ class Person:
         observation_d["observation_date"] = observation_date
         observation_d["observation_type_concept_id"] = observation_type_concept_id
 
+        # do not insert recurrent information, reuse instead
+        # especially location definitions are affected by this
+        if observation_d in self.observations:
+            return self.observations[self.observations.index(observation_d)]
+
         self.observations.append(observation_d)
+        return observation_d
 
     def add_condition(self,
                       condition_concept_id,
@@ -77,6 +84,7 @@ class Person:
         condition_d["condition_type_concept_id"] = condition_type_concept_id
 
         self.conditions.append(condition_d)
+        return condition_d
 
     def add_procedure(self,
                       procedure_concept_id,
@@ -94,6 +102,7 @@ class Person:
         procedure_d["procedure_type_concept_id"] = procedure_type_concept_id
 
         self.procedures.append(procedure_d)
+        return procedure_d
 
     def add_fact_relationship(self, table_from: str, entry_from: dict, table_to: str, entry_to: dict):
         table_lut = {'p': "10",  # procedure
