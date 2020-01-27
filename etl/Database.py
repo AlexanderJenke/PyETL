@@ -150,6 +150,7 @@ if __name__ == '__main__':
               "person",
               "procedure_occurrence",
               "visit_occurrence",
+              "care_site",
               ]
 
     if input(f"Do you realy want to clear the Tables {tables} \nin the Database '{database}'? \nType 'Yes'.\n") == "Yes":

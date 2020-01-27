@@ -16,7 +16,7 @@ class Person:
                   visit_type_concept_id,
                   **kwargs):
 
-        # Optional Values
+        # add all optional Values
         visit_d = {key: value for key, value in kwargs.items()}
 
         # Required Values (Except person_id)
@@ -34,7 +34,7 @@ class Person:
                         measurement_type_concept_id,
                         **kwargs):
 
-        # Optional Values
+        # add all optional Values
         measurement_d = {key: value for key, value in kwargs.items()}
 
         # Required Values (Except measurement_id & person_id)
@@ -50,7 +50,7 @@ class Person:
                         observation_type_concept_id,
                         **kwargs):
 
-        # Optional Values
+        # add all optional Values
         observation_d = {key: value for key, value in kwargs.items()}
 
         # Required Values (Except observation_id & person_id)
@@ -67,7 +67,7 @@ class Person:
                       condition_type_concept_id,
                       **kwargs):
 
-        # Optional Values
+        # add all optional Values
         condition_d = {key: value for key, value in kwargs.items()}
 
         # Required Values (Except condition_id & person_id)
@@ -84,7 +84,7 @@ class Person:
                       procedure_datetime,
                       procedure_type_concept_id,
                       **kwargs):
-        # Optional Values
+        # add all optional Values
         procedure_d = {key: value for key, value in kwargs.items()}
 
         # Required Values (Except procedure_id & person_id)
@@ -98,15 +98,16 @@ class Person:
     def insert_into_db(self):
         queries = ()
 
-        # person
+        # SQL querys to insert person
         keys = ""
         values = ""
         for key, value in self.person.items():
+            # location
             if key == "location":
-                queries += f"""
-DO $do$ BEGIN IF NOT EXISTS(Select * from  p21_cdm.location WHERE city='{value['city']}' and zip='{value['zip']}') THEN
-insert into  p21_cdm.location (city, zip) VALUES ('{value['city']}', '{value['zip']}');
-END IF; END; $do$""",
+                # ensure location is in table
+                queries += f"""DO $do$ BEGIN IF NOT EXISTS (SELECT * FROM p21_cdm.location WHERE city='{value['city']}' 
+                               AND zip='{value['zip']}') THEN INSERT INTO  p21_cdm.location (city, zip) 
+                               VALUES ('{value['city']}', '{value['zip']}'); END IF; END; $do$""",
                 continue
 
             keys += f"{key},"
@@ -119,17 +120,40 @@ END IF; END; $do$""",
                                and zip='{self.person['location']['zip']}'), {values[:-1]}) 
                        RETURNING person_id""",
 
+        # SQL querys to insert visits
+        for visit in self.visits:
+            keys = "person_id,"
+            values = f"'{self.person['person_id']}',"
+            for key, value in visit.items():
+                if key == "care_site_name":
+                    # ensure care site is in table
+                    queries += f"""DO $do$ BEGIN IF NOT EXISTS (SELECT * 
+                                                                FROM p21_cdm.care_site 
+                                                                WHERE care_site_name='{value}') 
+                                           THEN INSERT INTO  p21_cdm.care_site (care_site_name) 
+                                           VALUES ('{value}'); END IF; END; $do$""",
+                    continue
+
+                keys += f"{key},"
+                values += f"'{value}',"
+
+            queries += f"""INSERT INTO p21_cdm.visit_occurrence (care_site_id, {keys[:-1]}) 
+                           VALUES((SELECT care_site_id
+                                   FROM p21_cdm.care_site
+                                   WHERE care_site_name='{visit['care_site_name']}'),
+                                  {values[:-1]}) 
+                           RETURNING visit_occurrence_id""",
+
+        # SQL querys to insert measurements, observations, conditions & procedures
         for data, tablename in [(self.measurements, "measurement"),
                                 (self.observations, "observation"),
                                 (self.conditions, "condition_occurrence"),
-                                (self.procedures, "procedure_occurrence"),
-                                (self.visits, "visit_occurrence")]:
-            # print(len(data), tablename)  # TODO Remove later
-            for m in data:
+                                (self.procedures, "procedure_occurrence")]:
+            for entry in data:
                 keys = "person_id,"
                 values = f"'{self.person['person_id']}',"
 
-                for key, value in m.items():
+                for key, value in entry.items():
                     keys += f"{key},"
                     values += f"'{value}',"
 

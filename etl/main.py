@@ -1,5 +1,5 @@
 import pandas as pd
-#from sys import argv
+# from sys import argv
 import os
 from Classes import Person
 from Database import OMOP
@@ -7,6 +7,9 @@ from optparse import OptionParser
 
 from tqdm import tqdm
 from sys import stderr
+
+CSV_DELIMITER = ";"
+
 
 def get_opts_and_args():
     parser = OptionParser()
@@ -20,20 +23,22 @@ if __name__ == "__main__":
     csv_dir = args[0]  # Path to csv files
 
     # load csv files
+    fab_csv = os.path.join(csv_dir, "FAB.csv")
     fall_csv = os.path.join(csv_dir, "FALL.csv")
     icd_csv = os.path.join(csv_dir, "ICD.csv")
     messungen_csv = os.path.join(csv_dir, "MESSUNGEN.csv")
     labor_csv = os.path.join(csv_dir, "LABOR.csv")
     ops_csv = os.path.join(csv_dir, "OPS.csv")
 
-    fall_pd = pd.read_csv(fall_csv, delimiter=";")
-    icd_pd = pd.read_csv(icd_csv, delimiter=";")
-    messungen_pd = pd.read_csv(messungen_csv, delimiter=";")
-    labor_pd = pd.read_csv(labor_csv, delimiter=";")
-    ops_pd = pd.read_csv(ops_csv, delimiter=";")
+    fab_pd = pd.read_csv(fab_csv, delimiter=CSV_DELIMITER)
+    fall_pd = pd.read_csv(fall_csv, delimiter=CSV_DELIMITER)
+    icd_pd = pd.read_csv(icd_csv, delimiter=CSV_DELIMITER)
+    messungen_pd = pd.read_csv(messungen_csv, delimiter=CSV_DELIMITER)
+    labor_pd = pd.read_csv(labor_csv, delimiter=CSV_DELIMITER)
+    ops_pd = pd.read_csv(ops_csv, delimiter=CSV_DELIMITER)
 
     # init database connector
-    omop = OMOP(do_commits=False)  # TODO Activate commits or enable commit of whole person
+    omop = OMOP(do_commits=False)
 
     # add one patient after another
     for id in tqdm(fall_pd["patienten_nummer"].unique()):
@@ -54,7 +59,7 @@ if __name__ == "__main__":
                         location=location,
                         )
 
-        for i, row in fall_df.iterrows():
+        for i, row in fall_df.iterrows():  # create new visit for every row in FALL.csv
             person.add_visit(visit_occurrence_id=str(row['kh_internes_kennzeichen']),
                              visit_concept_id=omop.VISIT_TYPE_LUT[str(row['aufnahmeanlass'])],
                              visit_start_date=str(row["aufnahmedatum"])[:8],
@@ -63,9 +68,11 @@ if __name__ == "__main__":
                              visit_source_value=str(row['aufnahmeanlass']),
                              admitting_source_value=str(row['aufnahmegrund']),
                              discharge_to_source_value=str(row['entlassungsgrund']),
+                             care_site_name=
+                             fab_pd[fab_pd['KH-internes-Kennzeichen'] == int(row['kh_internes_kennzeichen'])]['FAB'].iloc[-1]
                              )
 
-        internal_ids = [key for key in fall_df["kh_internes_kennzeichen"]]  # associated internal ids
+        internal_ids = [key for key in fall_df["kh_internes_kennzeichen"]]  # associated internal ids for patient
 
         # LABOR.csv ----------------------------------------------------------------------------------------------------
         labor_df = labor_pd[labor_pd.kh_internes_kennzeichen.isin(internal_ids)]
@@ -197,12 +204,13 @@ if __name__ == "__main__":
                                            )
                     # add lokalisation
                     if str(row["lokalisation"]) != "nan":
-                        person.add_observation(observation_concept_id=omop.LOCALISATION_LUT.get(str(row['lokalisation'])),
-                                               observation_date=fall_aufnahmedatum[:8],
-                                               observation_type_concept_id="38000280",  # Observation recorded from EHR
-                                               observation_source_value=str(row['lokalisation']),
-                                               value_as_string=str(row['lokalisation']),
-                                               )
+                        person.add_observation(
+                            observation_concept_id=omop.LOCALISATION_LUT.get(str(row['lokalisation'])),
+                            observation_date=fall_aufnahmedatum[:8],
+                            observation_type_concept_id="38000280",  # Observation recorded from EHR
+                            observation_source_value=str(row['lokalisation']),
+                            value_as_string=str(row['lokalisation']),
+                        )
 
                     # TODO add FACT_RELATIONSHIPs
 
@@ -237,12 +245,13 @@ if __name__ == "__main__":
                                                            code_version=icd_version)
                     # add lokalisation
                     if str(row["lokalisation"]) != "nan":
-                        person.add_observation(observation_concept_id=omop.LOCALISATION_LUT.get(str(row['lokalisation'])),
-                                               observation_date=fall_aufnahmedatum[:8],
-                                               observation_type_concept_id="38000280",  # Observation recorded from EHR
-                                               observation_source_value=str(row['lokalisation']),
-                                               value_as_string=str(row['lokalisation']),
-                                               )
+                        person.add_observation(
+                            observation_concept_id=omop.LOCALISATION_LUT.get(str(row['lokalisation'])),
+                            observation_date=fall_aufnahmedatum[:8],
+                            observation_type_concept_id="38000280",  # Observation recorded from EHR
+                            observation_source_value=str(row['lokalisation']),
+                            value_as_string=str(row['lokalisation']),
+                        )
 
                     person.add_condition(condition_concept_id=str(omop.ICD10GM2SNOMED[concept_id]),
                                          condition_start_date=fall_aufnahmedatum[:8],
@@ -321,5 +330,5 @@ if __name__ == "__main__":
         sqls = person.insert_into_db()
         for sql in sqls:
             id = omop.select(sql)
-            print(id[0][0], sql)
+            # print(id[0][0], sql)
         omop.commit()  # TODO enable commit of whole person or activate commits on omop-init
