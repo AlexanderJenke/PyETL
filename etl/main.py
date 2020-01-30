@@ -39,9 +39,8 @@ if __name__ == "__main__":
     # init database connector
     omop = OMOP(host=opts.db_host, port=opts.db_port, do_commits=False)
 
-    # add one patient after another
-    for id in tqdm(fall_pd["patienten_nummer"].unique()):
-
+    # insert patiend with id into database
+    def patient(id):
         #  FALL.csv ----------------------------------------------------------------------------------------------------
         fall_df = fall_pd[fall_pd.patienten_nummer.isin([id])]
         fall_df = fall_df.sort_values(by=["aufnahmedatum"])
@@ -60,7 +59,7 @@ if __name__ == "__main__":
 
         for i, row in fall_df.iterrows():  # create new visit for every row in FALL.csv
             person.add_visit(visit_occurrence_id=str(row['kh_internes_kennzeichen']),
-                             visit_concept_id=omop.VISIT_TYPE_LUT[str(row['aufnahmeanlass'])],
+                             visit_concept_id=omop.VISIT_TYPE_LUT.get(str(row['aufnahmeanlass'])),
                              visit_start_date=str(row["aufnahmedatum"])[:8],
                              visit_end_date=str(row["entlassungsdatum"])[:8],
                              visit_type_concept_id="44818518",  # Visit derived from EHR record
@@ -390,3 +389,20 @@ if __name__ == "__main__":
 
         # insert into database -----------------------------------------------------------------------------------------
         person.insert_into_db(omop)
+
+        return id
+
+    # add one patient after another
+    for id in tqdm(fall_pd["patienten_nummer"].unique()):
+        patient(id)
+    
+    '''
+    # insert multiple patients in paralell into Database
+    import concurrent.futures
+    with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+        ts = [executor.submit(patient, id) for id in tqdm(fall_pd["patienten_nummer"].unique())]
+
+        bar = tqdm(total=len(ts))
+        for t in concurrent.futures.as_completed(ts):
+            bar.update(1)
+    '''
