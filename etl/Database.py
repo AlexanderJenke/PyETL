@@ -25,14 +25,17 @@ class OMOP:
         self.conn = db.connect(f"dbname='{dbname}' user='{user}' host='{host}' port='{port}' password='{password}'")
         self.cursor = self.conn.cursor()
         self.preload_lut()
-        self.GENDER_LUT = {"m": "8507", "w": "8532", "nan": "8551"}
+        self.GENDER_LUT = {"m": "8507", "w": "8532", "nan": "8551", "(null)": "8551"}
         self.CONDITION_TYPE_LUT = {"ND": "44786629", "HD": "44786627"}
-        self.VISIT_TYPE_LUT = {"E": "9201",  # Einweisung  -> Inpatient Visit
-                               "V": "9201",  # Verlegung >24h -> Inpatient Visit
-                               "R": "9201",  # Aufnahme  aud Reha -> Inpatient Visit
-                               "A": "9202",  # Verlegung <24h -> Outpatient Visit
-                               "N": "9203",  # Notfall -> Emergency
-                               }
+        self.VISIT_TYPE_LUT = LUT(default="0",
+                                  name="VISIT_TYPE_LUT",
+                                  content={"E": "9201",  # Einweisung  -> Inpatient Visit
+                                           "V": "9201",  # Verlegung >24h -> Inpatient Visit
+                                           "R": "9201",  # Aufnahme  aud Reha -> Inpatient Visit
+                                           "A": "9202",  # Verlegung <24h -> Outpatient Visit
+                                           "N": "9203",  # Notfall -> Emergency
+                                           "nan": "0",  # no reason given
+                                           })
         self.LOCALISATION_LUT = LUT(default="0",
                                     name="LOCALISATION_LUT",
                                     content={"L": "4149748",
@@ -162,7 +165,9 @@ if __name__ == '__main__':
               "care_site",
               ]
 
-    if input(f"Do you realy want to clear the Tables {tables} \nin the Database '{database}'? \nType 'Yes'.\n") == "Yes":
+    if input(f"Do you realy want to clear the Tables {tables} \n"
+             f"in the Database '{database}'? \n"
+             f"Type 'Yes'.\n") == "Yes":
         omop = OMOP()
         for table in tables:
             omop.insert(f"DELETE FROM {database}.{table}")
