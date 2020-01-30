@@ -325,7 +325,10 @@ if __name__ == "__main__":
 
             elif domain_id == "Procedure":
                 # Not Handled
-                raise NotImplementedError("'Procedure' in the ICD.csv is not supported!")
+                #raise NotImplementedError(
+                print(f"WARNING: 'Procedure' in the ICD.csv is not supported!\n"
+                      f"Skipping row in ICD.csv!\n"
+                      f"{row}")
 
             elif domain_id == "KeyNotFound":
                 print(f"WARNING: Skipping row in ICD.csv! \n{row}", file=stderr)
