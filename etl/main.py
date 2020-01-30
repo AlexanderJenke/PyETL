@@ -38,7 +38,6 @@ if __name__ == "__main__":
     # init database connector
     omop = OMOP(host=opts.db_host, port=opts.db_port, do_commits=False)
 
-
     # insert patiend with id into database
     def patient(id):
         #  FALL.csv ----------------------------------------------------------------------------------------------------
