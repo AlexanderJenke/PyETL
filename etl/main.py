@@ -7,13 +7,12 @@ from optparse import OptionParser
 from tqdm import tqdm
 from sys import stderr
 
-CSV_DELIMITER = ";"
-
 
 def get_opts_and_args():
     parser = OptionParser()
     parser.add_option("--db_host", dest="db_host", default="localhost")
     parser.add_option("--db_port", dest="db_port", default="5432")
+    parser.add_option("--csv_delimiter", dest="csv_del", default=";")
     return parser.parse_args()
 
 
@@ -29,15 +28,16 @@ if __name__ == "__main__":
     labor_csv = os.path.join(csv_dir, "LABOR.csv")
     ops_csv = os.path.join(csv_dir, "OPS.csv")
 
-    fab_pd = pd.read_csv(fab_csv, delimiter=CSV_DELIMITER)
-    fall_pd = pd.read_csv(fall_csv, delimiter=CSV_DELIMITER)
-    icd_pd = pd.read_csv(icd_csv, delimiter=CSV_DELIMITER)
-    messungen_pd = pd.read_csv(messungen_csv, delimiter=CSV_DELIMITER)
-    labor_pd = pd.read_csv(labor_csv, delimiter=CSV_DELIMITER)
-    ops_pd = pd.read_csv(ops_csv, delimiter=CSV_DELIMITER)
+    fab_pd = pd.read_csv(fab_csv, delimiter=opts.csv_del)
+    fall_pd = pd.read_csv(fall_csv, delimiter=opts.csv_del)
+    icd_pd = pd.read_csv(icd_csv, delimiter=opts.csv_del)
+    messungen_pd = pd.read_csv(messungen_csv, delimiter=opts.csv_del)
+    labor_pd = pd.read_csv(labor_csv, delimiter=opts.csv_del)
+    ops_pd = pd.read_csv(ops_csv, delimiter=opts.csv_del)
 
     # init database connector
     omop = OMOP(host=opts.db_host, port=opts.db_port, do_commits=False)
+
 
     # insert patiend with id into database
     def patient(id):
@@ -325,7 +325,7 @@ if __name__ == "__main__":
 
             elif domain_id == "Procedure":
                 # Not Handled
-                #raise NotImplementedError(
+                # raise NotImplementedError(
                 print(f"WARNING: 'Procedure' in the ICD.csv is not supported!\n"
                       f"Skipping row in ICD.csv!\n"
                       f"{row}")
@@ -395,10 +395,11 @@ if __name__ == "__main__":
 
         return id
 
+
     # add one patient after another
     for id in tqdm(fall_pd["patienten_nummer"].unique()):
         patient(id)
-    
+
     '''
     # insert multiple patients in paralell into Database
     import concurrent.futures
