@@ -17,7 +17,7 @@ if __name__ == '__main__':
     # device = 'cpu'
     ds = OMOP_Samples("synpuf_cdm.minimal.pkl")
 
-    features_lut = ["Is Male", "Is Female", "Age"] + [ds.alphabet[concept_id] for concept_id in
+    features_lut = ["Is Male", "Is Female", "Age"] + [ds.alphabet[concept_id][0] for concept_id in
                                                       sorted(ds.features_lut, key=lambda x: ds.features_lut[x])]
 
     '''
@@ -49,8 +49,8 @@ if __name__ == '__main__':
 
         output = model(features)
 
-        output.data = torch.FloatTensor([1]).to(device)
-        output.backward()
+        #output.data = torch.FloatTensor([1]).to(device)
+        output.backward(torch.tensor([-1.0]))
 
         feature_importance[j * batch_size:
                            j * batch_size + features.shape[0]] = features.grad.cpu().numpy()
@@ -59,7 +59,7 @@ if __name__ == '__main__':
     feature_importance = feature_importance[:j]
 
     importance = {}
-    for i, v in enumerate(abs(feature_importance).mean(axis=0)):
+    for i, v in enumerate(feature_importance.mean(axis=0)):
         importance[i] = v
 
 
@@ -69,6 +69,6 @@ if __name__ == '__main__':
     a = feature_importance.mean(axis=0)
     np.save("a.npy", a)
 
-    for id in sorted(importance, key=lambda x: importance[x], reverse=True):
-        if features_lut[id][1] in ['Procedure', 'Conditions']: #, 'Conditions', 'Procedure', 'Measurement']:
-            print(importance[id], features_lut[id][0])
+    for id in sorted(importance, key=lambda x: abs(importance[x]), reverse=True):
+        # if features_lut[id][1] in ['Procedure', 'Conditions']: #, 'Conditions', 'Procedure', 'Measurement']:
+        print(importance[id], features_lut[id])
