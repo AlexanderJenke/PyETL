@@ -38,6 +38,7 @@ if __name__ == "__main__":
     # init database connector
     omop = OMOP(host=opts.db_host, port=opts.db_port, do_commits=False)
 
+
     # insert patiend with id into database
     def patient(id):
         #  FALL.csv ----------------------------------------------------------------------------------------------------
@@ -57,6 +58,12 @@ if __name__ == "__main__":
                         )
 
         for i, row in fall_df.iterrows():  # create new visit for every row in FALL.csv
+            fabs = fab_pd[fab_pd['kh_internes_kennzeichen'] == int(row['kh_internes_kennzeichen'])]['fab']
+            if len(fabs):
+                fab = fabs.iloc[-1]
+            else:
+                fab = "0"
+
             person.add_visit(visit_occurrence_id=str(row['kh_internes_kennzeichen']),
                              visit_concept_id=omop.VISIT_TYPE_LUT.get(str(row['aufnahmeanlass'])),
                              visit_start_date=str(row["aufnahmedatum"])[:8],
@@ -65,9 +72,7 @@ if __name__ == "__main__":
                              visit_source_value=str(row['aufnahmeanlass']),
                              admitting_source_value=str(row['aufnahmegrund']),
                              discharge_to_source_value=str(row['entlassungsgrund']),
-                             care_site_name=
-                             fab_pd[fab_pd['KH-internes-Kennzeichen'] == int(row['kh_internes_kennzeichen'])][
-                                 'FAB'].iloc[-1],
+                             care_site_name=fab,
                              )
 
         internal_ids = [key for key in fall_df["kh_internes_kennzeichen"]]  # associated internal ids for patient
@@ -101,17 +106,23 @@ if __name__ == "__main__":
 
             elif domain_id == "Observation":
                 # Not Handled
-                raise NotImplementedError("'Observation' in the LABOR.csv is not supported!")
+                print(f"WARNING: 'Observation' in the LABOR.csv is not supported!\n"
+                      f" Skipping row in LABOR.csv! \n"
+                      f"{row}", file=stderr)
 
             elif domain_id == "Meas Value":
                 # Not Handled
-                raise NotImplementedError("'Meas Value' in the LABOR.csv is not supported!")
+                print(f"WARNING: 'Meas Value' in the LABOR.csv is not supported!\n"
+                      f" Skipping row in LABOR.csv! \n"
+                      f"{row}", file=stderr)
 
             elif domain_id == "KeyNotFound":
                 print(f"WARNING: Skipping row in LABOR.csv! \n{row}", file=stderr)
 
             else:
-                raise NotImplementedError(f"'{domain_id}' in the LABOR.csv is not supported!")
+                print(f"WARNING: '{domain_id}' in the LABOR.csv is not supported!\n"
+                      f" Skipping row in LABOR.csv! \n"
+                      f"{row}", file=stderr)
 
         # MESSUNGEN.csv ------------------------------------------------------------------------------------------------
         messungen_df = messungen_pd[messungen_pd.kh_internes_kennzeichen.isin(internal_ids)]
@@ -134,17 +145,23 @@ if __name__ == "__main__":
 
             elif domain_id == "Observation":
                 # Not Handled
-                raise NotImplementedError("Observation in the MESSUNGEN.csv is not supported!")
+                print(f"WARNING: 'Observation' in the MESSUNGEN.csv is not supported!\n"
+                      f" Skipping row in MESSUNGEN.csv! \n"
+                      f"{row}", file=stderr)
 
             elif domain_id == "Meas Value":
                 # Not Handled
-                raise NotImplementedError("'Meas Value' in the MESSUNGEN.csv is not supported!")
+                print(f"WARNING: 'Meas Value' in the MESSUNGEN.csv is not supported!\n"
+                      f" Skipping row in MESSUNGEN.csv! \n"
+                      f"{row}", file=stderr)
 
             elif domain_id == "KeyNotFound":
                 print(f"WARNING: Skipping row in MESSUNGEN.csv! \n{row}", file=stderr)
 
             else:
-                raise NotImplementedError(f"'{domain_id}' in the MESSUNGEN.csv is not supported!")
+                print(f"WARNING: 'Meas {domain_id}' in the MESSUNGEN.csv is not supported!\n"
+                      f" Skipping row in MESSUNGEN.csv! \n"
+                      f"{row}", file=stderr)
 
         # ICD.csv ------------------------------------------------------------------------------------------------------
         icd_df = icd_pd[icd_pd.kh_internes_kennzeichen.isin(internal_ids)]
@@ -320,11 +337,12 @@ if __name__ == "__main__":
 
             elif domain_id == "Measurement":
                 # Not Handled
-                raise NotImplementedError("'Measurement' in the ICD.csv is not supported!")
+                print(f"WARNING: 'Measurement' in the ICD.csv is not supported!\n"
+                      f" Skipping row in ICD.csv! \n"
+                      f"{row}", file=stderr)
 
             elif domain_id == "Procedure":
                 # Not Handled
-                # raise NotImplementedError(
                 print(f"WARNING: 'Procedure' in the ICD.csv is not supported!\n"
                       f"Skipping row in ICD.csv!\n"
                       f"{row}")
@@ -333,7 +351,9 @@ if __name__ == "__main__":
                 print(f"WARNING: Skipping row in ICD.csv! \n{row}", file=stderr)
 
             else:
-                raise NotImplementedError(f"'{domain_id}' in the ICD.csv is not supported!")
+                print(f"WARNING: '{domain_id}' in the ICD.csv is not supported!\n"
+                      f" Skipping row in ICD.csv! \n"
+                      f"{row}", file=stderr)
 
         # OPS.csv ------------------------------------------------------------------------------------------------------
         ops_df = ops_pd[ops_pd.kh_internes_kennzeichen.isin(internal_ids)]
@@ -373,21 +393,29 @@ if __name__ == "__main__":
 
             elif domain_id == "Observation":
                 # Not Handled
-                raise NotImplementedError("'Observation' in the OPS.csv is not supported!")
+                print(f"WARNING: 'Observation' in the OPS.csv is not supported!\n"
+                      f" Skipping row in OPS.csv! \n"
+                      f"{row}", file=stderr)
 
             elif domain_id == "Condition":
                 # Not Handled
-                raise NotImplementedError("'Condition' in the OPS.csv is not supported!")
+                print(f"WARNING: 'Condition' in the OPS.csv is not supported!\n"
+                      f" Skipping row in OPS.csv! \n"
+                      f"{row}", file=stderr)
 
             elif domain_id == "Measurement":
                 # Not Handled
-                raise NotImplementedError("'Measurement' in the OPS.csv is not supported!")
+                print(f"WARNING: 'Measurement' in the OPS.csv is not supported!\n"
+                      f" Skipping row in OPS.csv! \n"
+                      f"{row}", file=stderr)
 
             elif domain_id == "KeyNotFound":
                 print(f"WARNING: Skipping row in OPS.csv! \n{row}", file=stderr)
 
             else:
-                raise NotImplementedError(f"'{domain_id}' in the OPS.csv is not supported!")
+                print(f"WARNING: '{domain_id}' in the OPS.csv is not supported!\n"
+                      f" Skipping row in OPS.csv! \n"
+                      f"{row}", file=stderr)
 
         # insert into database -----------------------------------------------------------------------------------------
         person.insert_into_db(omop)
