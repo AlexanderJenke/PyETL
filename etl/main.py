@@ -345,7 +345,7 @@ if __name__ == "__main__":
                 # Not Handled
                 print(f"WARNING: 'Procedure' in the ICD.csv is not supported!\n"
                       f"Skipping row in ICD.csv!\n"
-                      f"{row}")
+                      f"{row}", file=stderr)
 
             elif domain_id == "KeyNotFound":
                 print(f"WARNING: Skipping row in ICD.csv! \n{row}", file=stderr)
