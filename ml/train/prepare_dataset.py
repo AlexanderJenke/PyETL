@@ -106,7 +106,7 @@ def prepare_person(pid, *args):
 
         conditions = get_table("condition_occurrence",
                                {"condition_concept_id": "id",
-                                "'1'": "value",
+                                "'1'": "value",  #
                                 "condition_start_date": "date",
                                 "condition_end_date": "end_date",
                                 },
@@ -131,16 +131,21 @@ def prepare_person(pid, *args):
         # entrys -> patient data
         for row in data:
             concept_id = snomed_lut[str(row['id'])]
-            if 'end_date' in row:
-                enddate = []
-                if row['end_date'] is not None:
-                    enddate += [i for i in range(len(dates) - 1)
-                                if dates[i] <= row['end_date'] < dates[i + 1]]
 
-                enddate += [len(dates) - 1]
-                patient_data[concept_id_lut[concept_id], dates_lut[row['date']]:enddate[0]] = row['value']
+            if row['value'] is None:
+                value = 1.0
             else:
-                patient_data[concept_id_lut[concept_id], dates_lut[row['date']]] = row['value']
+                try:
+                    value = float(row['value'])
+                except ValueError:
+                    print(f"ERROR: {row['value']} can not be converted into float! \n{row}")
+                    continue
+
+            enddate = []
+            if 'end_date' in row and row['end_date'] is not None:
+                enddate += [i for i in range(len(dates) - 1) if dates[i] <= row['end_date'] < dates[i + 1]]
+            enddate += [len(dates)]
+            patient_data[concept_id_lut[concept_id], dates_lut[row['date']]:enddate[0]] = value
 
         # patient data -> samples
         samples = ()
@@ -149,9 +154,14 @@ def prepare_person(pid, *args):
             sample["age"] = age
             sample["female"] = int(gender_concept_id == 8532)
             sample["male"] = int(gender_concept_id == 8507)
-            label = bool(set([concept_ids[j] for j in range(len(concept_ids)) if patient_data[j, i + 1] != 0]) & labels)
+            # decubitus will be diagnosed newly next timestamp
+            label = bool(set([concept_ids[j]
+                              for j in range(len(concept_ids))
+                              if patient_data[j, i] == 0 and patient_data[j, i + 1] != 0]
+                             ) & labels)
             samples += (sample, label),
 
+        # save patient data
         with open(os.path.join(OUTPUT_DIR,
                                "1" if sum([int(s[1]) for s in samples]) else "0",
                                f"{str(pid).zfill(6)}.pkl"),
