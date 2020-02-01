@@ -19,9 +19,10 @@ class PreparedOMOP:
             with open(os.path.join(directory, "train", file), 'rb') as f:
                 train_patients += pickle.load(f)
 
-        ids = sorted(set(np.concatenate([list(p[0].keys()) for p in test_patients + train_patients if p[1]])))
+        ids = sorted(set(
+            np.concatenate([[k for k in p[0].keys() if p[0][k] != 0] for p in test_patients + train_patients if p[1]])))
 
-        self.disease_lut = {i: self.alphabet[i][0] for i in ids}
+        self.disease_lut = {i: self.alphabet[j][0] for i, j in enumerate(ids)}
 
         self.test_data = []
         self.train_data = []
@@ -42,7 +43,9 @@ class PreparedOMOP:
             self.data = data
 
         def __getitem__(self, item):
-            return self.data[item]
+            return torch.tensor(self.data[item][0],
+                                dtype=torch.float32), torch.tensor([self.data[item][1]],
+                                                                   dtype=torch.float32)
 
         def __len__(self):
             return len(self.data)
@@ -56,5 +59,6 @@ if __name__ == '__main__':
 
     trainset, testset = dss.get_datasets()
 
-    print(len(trainset), trainset.n_pos())
-    print(len(testset), testset.n_pos())
+    print(f"trainset: len {len(trainset)} n_pos{trainset.n_pos()}")
+    print(f"testset:  len {len(testset)} n_pos{testset.n_pos()}")
+    print(f"N Features: {len(dss.disease_lut)}")
