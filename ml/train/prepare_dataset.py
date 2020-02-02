@@ -184,7 +184,13 @@ def split_set(pos_neg_ratio=0.1):
 
 
 def main():
-    rmtree(OUTPUT_DIR)
+    if os.path.isdir(OUTPUT_DIR):
+        if input(f"WARNING: '{OUTPUT_DIR}' already exists!\n"
+                 f"         Do you want to replace the data?\n"
+                 f"         [Yes, No]:\n") == "Yes":
+            rmtree(OUTPUT_DIR)
+        else:
+            exit(1)
     os.mkdir(OUTPUT_DIR)
     os.mkdir(os.path.join(OUTPUT_DIR, "0"))
     os.mkdir(os.path.join(OUTPUT_DIR, "1"))
