@@ -59,6 +59,6 @@ if __name__ == '__main__':
 
     trainset, testset = dss.get_datasets()
 
-    print(f"trainset: len {len(trainset)} n_pos{trainset.n_pos()}")
-    print(f"testset:  len {len(testset)} n_pos{testset.n_pos()}")
+    print(f"trainset: len {len(trainset)} n_pos {trainset.n_pos()}")
+    print(f"testset:  len {len(testset)} n_pos {testset.n_pos()}")
     print(f"N Features: {len(dss.disease_lut)}")
