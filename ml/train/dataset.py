@@ -22,7 +22,9 @@ class PreparedOMOP:
         ids = sorted(set(
             np.concatenate([[k for k in p[0].keys() if p[0][k] != 0] for p in test_patients + train_patients if p[1]])))
 
-        self.disease_lut = {i: self.alphabet[j][0] for i, j in enumerate(ids)}
+        self.disease_lut = {i: {"name": self.alphabet[j][0], "cid": j} for i, j in enumerate(ids)}
+        with open(os.path.join(directory, "disease_lut.pkl"), 'wb') as file:
+            pickle.dump(self.disease_lut, file)
 
         self.test_data = []
         self.train_data = []

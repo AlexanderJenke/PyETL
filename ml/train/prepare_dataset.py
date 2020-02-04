@@ -15,11 +15,6 @@ FUTURE_HORIZON = 3
 ONLY_POS = True
 
 
-def call(self, sql: str):
-    self.execute(sql)
-    return self.fetchall()
-
-
 class DB_Connector:
     def __init__(self,
                  dbname='OHDSI',

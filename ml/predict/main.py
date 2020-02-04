@@ -9,52 +9,44 @@ import os
 
 sys.path.append(os.pardir)
 import model as m
-from dataset import PreparedOMOP
-
+from dataset import NewestOMOP
 
 if __name__ == '__main__':
-    batch_size = 1  # 000
 
-    # model_path = sys.argv[1]
-    model_path = "../output/models/PosData_SVMDropout_Adam_LR1e-05_EP5000__03022020_002945.pt"
+    model_path = sys.argv[1]
+
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    # device = 'cpu'
-    dss = PreparedOMOP("../output/dataset_pos/")
-    trainset, ds = dss.get_datasets()
-    features_lut = dss.disease_lut
 
-    model = m.SVM(len(ds[0][0]))
+    dss = NewestOMOP("../output/dataset_pos_f5/disease_lut.pkl")
+
+    model = m.SVM(len(dss[0][1]))
     model.load(model_path, device=device)
     model.to(device)
+
+    ids_d = {dss.disease_lut[i]['cid']: dss.disease_lut[i]['name'] for i in dss.disease_lut}
+    name_lut = [ids_d[i] for i in sorted(ids_d, key=lambda x: x)]
 
     for param in model.parameters():
         param.requires_grad = False
 
-    j = 0
-    feature_importance = np.zeros((len(ds), len(ds[0][0])), dtype=np.float)
-    for i, batch in enumerate(tqdm(ds)):
-        features, labels = batch
-
-        if not labels.item():
-            #continue
-            pass
-
+    for patient in dss:
+        pid, features = patient
         features = features.to(device)
-        labels = labels.to(device)
-
         features.requires_grad = True
 
-        output = model(features)[1:]
+        output = model(features.view(1, -1))
+        output.backward(torch.tensor([[1.0, -1.0]]))
 
-        # output.data = torch.FloatTensor([1]).to(device)
-        output.backward(torch.tensor([-((labels[0]-0.5) * 2)]))
+        importance = features.grad.cpu().numpy() * (features != 0).float().numpy()
 
-        feature_importance[j * batch_size:
-                           j * batch_size + features.shape[0]] = features.grad.cpu().numpy() * (features != 0).float().numpy()
-        j += 1
+        importance_d = {i: v for i, v in enumerate(importance)}
 
-    feature_importance = feature_importance[:j]
+        top_ten = sorted(importance_d, key=lambda x: importance_d[x], reverse=False)[:10]  # abs()
+        if output[0, 1].item() > 0.2072:
+            for i in top_ten:
+                print(pid, output[0, 1].item(), features[i].item(), importance_d[i], name_lut[i], i)
 
+    """
     importance = {}
     for i, v in enumerate(feature_importance.mean(axis=0)):
         importance[i] = v
@@ -65,5 +57,6 @@ if __name__ == '__main__':
     np.save("a.npy", a)
 
     for id in sorted(importance, key=lambda x: abs(importance[x]), reverse=True):
-        #if importance[id] < 0:
+        # if importance[id] < 0:
         print(importance[id], features_lut[id])
+    """
