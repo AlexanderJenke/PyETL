@@ -4,13 +4,28 @@ from sys import stderr
 
 
 class LUT(dict):
+    """ A Look up Table to quickly look up mappings
+        This is basically a dict but if a key is not found an warning is printed and a default value is returned.
+    """
     def __init__(self, name, default=None, content={}):
+        """
+
+        :param name: name describing the LUT. Used in warnings to describe where the error occurred
+        :param default: default value to be returned if a key is not found
+        :param content: content used to initialize the LUT
+        """
         super().__init__(content)
         self.name = name
         self.default = {'domain_id': "KeyNotFound",
                         'concept_ids': ((0, date(1970, 1, 1), date(2099, 12, 31)),)} if default is None else default
 
     def get(self, item, default=None):
+        """ returns vaule if key is in LUT, else returns default value
+        :param item: key of value to be returned
+        :param default: specific default value to be returned if key is not found.
+        If not given the default value of the LUT is used
+        :return: value of key or default value if key not found
+        """
         try:
             return self[item]
         except KeyError:
@@ -19,8 +34,10 @@ class LUT(dict):
 
 
 class OMOP:
+    """ Database connector to the OMOP CDM"""
     def __init__(self, dbname='OHDSI', user='ohdsi_admin_user', host='localhost', port='5432', password='omop',
-                 do_commits=True):
+                 do_commits=False):
+        """initializes the database connection including preparation of LUTs"""
         self.do_commits = do_commits
         self.conn = db.connect(f"dbname='{dbname}' user='{user}' host='{host}' port='{port}' password='{password}'")
         self.cursor = self.conn.cursor()
@@ -54,6 +71,10 @@ class OMOP:
                                            )
 
     def select(self, sql: str):
+        """ execute SQL SELECT on database
+        :param sql: SQL to be executed
+        :return: result of SQL SELECT
+        """
         self.cursor.execute(sql)
         try:
             res = self.cursor.fetchall()
@@ -62,16 +83,21 @@ class OMOP:
             return [(None,)]
 
     def insert(self, sql: str):
+        """ execute SQL INSERT on database
+        :param sql: SQL INSERT to be executed
+        :return:
+        """
         self.cursor.execute(sql)
         if self.do_commits:
             self.conn.commit()
 
     def commit(self):
+        """ makes transactions on database persistent """
         self.conn.commit()
 
     def preload_lut(self):
-        """Preloads Look-up Tables for ICD10GM-, OPS- and LOINC-code -> concept_id
-        """
+        """Preloads Look-up Tables for ICD10GM-, OPS- and LOINC-code -> concept_id """
+
         print("Loading look-up tables...", end="")
         self.OPS_LUT = LUT("OPS_LUT")
 
@@ -125,6 +151,14 @@ class OMOP:
         print("done")
 
     def get_valid_concept_id(self, LUT, code: str, code_version: int = -1):
+        """ Returns a valid concept id.
+        If no valid entry for the given year is found the newest entry is returned.
+        If no entry at all for a code is found an error is risen.
+        :param LUT: LUT to be used to look the code up
+        :param code: code to be translated to concept id
+        :param code_version: year where the concept id should be valid
+        :return: concept id
+        """
         concept_id = None
         concept_ids = LUT.get(code)['concept_ids']
 
@@ -152,7 +186,10 @@ class OMOP:
 
 
 if __name__ == '__main__':
-    """Clear Database"""
+    """Clear Database 
+    On execution of this file and confirmaion by typing 'Yes' (case sensitive!) all entries of the named tables 
+    are deleted from the database.
+    """
     database = "p21_cdm"
     tables = ["condition_occurrence",
               "fact_relationship",
