@@ -22,7 +22,7 @@ class SaveLoad(nn.Module):
 class SVM(SaveLoad):
     def __init__(self, input_size):
         super(SVM, self).__init__()
-        self.fc = nn.Linear(input_size, 1)
+        self.fc = nn.Linear(input_size, 2)
 
     def forward(self, x):
         return F.softsign(self.fc(x))
@@ -41,14 +41,14 @@ class Net(SaveLoad):
         self.dropout = nn.Dropout()
 
         self.fc5 = nn.Linear(input_size * 2, input_size)
-        self.fc6 = nn.Linear(input_size, 1)
+        self.fc6 = nn.Linear(input_size, 2)
 
     def forward(self, x):
         x = F.leaky_relu(self.fc2(self.fc1(x)))
         x = F.leaky_relu(self.fc4(self.fc3(x)))
         x = self.dropout(x)
         x = F.leaky_relu(self.fc6(self.fc5(x)))
-        return x
+        return F.softsign(x)
 
 
 class Net_small(SaveLoad):
@@ -107,11 +107,50 @@ class FC_N_FC(SaveLoad):
     def __init__(self, input_size, n):
         super(FC_N_FC, self).__init__()
         self.fc1 = nn.Linear(input_size, n)
-        self.fc2 = nn.Linear(n, 1)
+        self.fc2 = nn.Linear(n, n)
+        self.fc3 = nn.Linear(n, 2)
 
     def forward(self, x):
         x = self.fc1(x)
         x = F.leaky_relu(x)
         x = self.fc2(x)
+        x = F.leaky_relu(x)
+        x = F.dropout(x)
+        x = self.fc3(x)
         x = F.softsign(x)
         return x
+
+class FC_FC(SaveLoad):
+    def __init__(self, input_size, n):
+        super(FC_FC, self).__init__()
+        self.fc1 = nn.Linear(input_size, n)
+        self.fc2 = nn.Linear(n, 2)
+
+    def forward(self, x):
+        x = self.fc1(x)
+        x = F.leaky_relu(x)
+        x = F.dropout(x)
+        x = self.fc2(x)
+        x = F.softsign(x)
+        return x
+
+
+class Classifier(SaveLoad):
+    def __init__(self, input_size):
+        super(Classifier, self).__init__()
+        self.fc1 = nn.Linear(input_size, 1000)
+        self.fc2 = nn.Linear(1000, 500)
+        self.fc3 = nn.Linear(500, 200)
+        self.fc4 = nn.Linear(200, 2)
+
+    def forward(self, x):
+        x = self.fc1(x)
+        x = F.leaky_relu(x)
+        x = self.fc2(x)
+        x = F.leaky_relu(x)
+        x = F.dropout(x)
+        x = self.fc3(x)
+        x = F.leaky_relu(x)
+        x = F.dropout(x)
+        x = self.fc4(x)
+        return F.softsign(x)

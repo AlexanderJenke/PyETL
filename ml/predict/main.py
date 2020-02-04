@@ -4,29 +4,26 @@ from tqdm import tqdm
 import tensorboardX
 import numpy as np
 import pickle
+import sys
+import os
 
-from dataset import OMOP_Samples
-from model import *
+sys.path.append(os.pardir)
+import model as m
+from dataset import PreparedOMOP
+
 
 if __name__ == '__main__':
     batch_size = 1  # 000
 
     # model_path = sys.argv[1]
-    model_path = "minimal_svm_LR1e-3_BS500_L-f1-wmse-r0,02_Ep3000.pt"
+    model_path = "../output/models/PosData_SVMDropout_Adam_LR1e-05_EP5000__03022020_002945.pt"
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     # device = 'cpu'
-    ds = OMOP_Samples("synpuf_cdm.minimal.pkl")
+    dss = PreparedOMOP("../output/dataset_pos/")
+    trainset, ds = dss.get_datasets()
+    features_lut = dss.disease_lut
 
-    features_lut = ["Is Male", "Is Female", "Age"] + [ds.alphabet[concept_id][0] for concept_id in
-                                                      sorted(ds.features_lut, key=lambda x: ds.features_lut[x])]
-
-    '''
-    model = N_FC(input_size=len(ds[0][0]),
-                 layers=[[100],
-                         [1]])
-    # '''
-
-    model = SVM(len(ds[0][0]))
+    model = m.SVM(len(ds[0][0]))
     model.load(model_path, device=device)
     model.to(device)
 
@@ -39,7 +36,7 @@ if __name__ == '__main__':
         features, labels = batch
 
         if not labels.item():
-            continue
+            #continue
             pass
 
         features = features.to(device)
@@ -47,13 +44,13 @@ if __name__ == '__main__':
 
         features.requires_grad = True
 
-        output = model(features)
+        output = model(features)[1:]
 
-        #output.data = torch.FloatTensor([1]).to(device)
-        output.backward(torch.tensor([-1.0]))
+        # output.data = torch.FloatTensor([1]).to(device)
+        output.backward(torch.tensor([-((labels[0]-0.5) * 2)]))
 
         feature_importance[j * batch_size:
-                           j * batch_size + features.shape[0]] = features.grad.cpu().numpy()
+                           j * batch_size + features.shape[0]] = features.grad.cpu().numpy() * (features != 0).float().numpy()
         j += 1
 
     feature_importance = feature_importance[:j]
@@ -62,13 +59,11 @@ if __name__ == '__main__':
     for i, v in enumerate(feature_importance.mean(axis=0)):
         importance[i] = v
 
-
-
     print(sum(importance.values()))
 
     a = feature_importance.mean(axis=0)
     np.save("a.npy", a)
 
     for id in sorted(importance, key=lambda x: abs(importance[x]), reverse=True):
-        # if features_lut[id][1] in ['Procedure', 'Conditions']: #, 'Conditions', 'Procedure', 'Measurement']:
+        #if importance[id] < 0:
         print(importance[id], features_lut[id])

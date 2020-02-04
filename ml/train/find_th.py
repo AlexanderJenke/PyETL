@@ -38,9 +38,12 @@ def f1_score(input: torch.tensor, target: torch.tensor):
 def main(path):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-    dss = PreparedOMOP("../output/dataset_pos/")
+    dss = PreparedOMOP("../output/dataset_pos_f5/")
     trainset, testset = dss.get_datasets()
-    testloader = DataLoader(testset, batch_size=len(testset), shuffle=True, pin_memory=True, num_workers=0)
+    ds = testset + trainset
+    # ds = testset
+    # ds = trainset
+    dl = DataLoader(ds, batch_size=len(testset), shuffle=True, pin_memory=True, num_workers=0)
 
     l = torch.tensor([i[1] for i in trainset])
     f_l = []
@@ -59,10 +62,9 @@ def main(path):
     preds_cat = torch.empty(0)
     labels_cat = torch.empty(0)
     out_cat = torch.empty(0)
-    for batch in testloader:
+    for batch in dl:
         features, labels_cpu = batch
         features = features.to(device)
-
         output = model(features)
         output = (output + 1) / 2
 
@@ -92,7 +94,8 @@ def main(path):
     plt.plot(x, p_l, label='P')
     plt.plot(x, r_l, label='R')
     plt.plot(x, base, label="Random Baseline")
-    plt.title(path.split('/')[-1] + f"\nmax F1: {max(f1_l)}")
+    plt.title(path.split('/')[-1] + f"\nmax F1: {max(f1_l)}\n"
+                                    f"th: {x[np.argmax(f1_l)]}")
     plt.legend()
     plt.show()
 
@@ -101,4 +104,4 @@ if __name__ == '__main__':
     # for file in os.listdir("../output/models"):
     #     if file.startswith("PosData_MFC870"):
     #         main(os.path.join("../output/models", file))
-    main("../output/models/PosData_SVMDropout_AdamW_LR1e-05_EP5000__03022020_004037.pt")
+    main("../output/models/PosData-F5_Dropout0.001SVM_AdamW_LR1e-05_EP2000_BS*0.1__03022020_153624.pt")

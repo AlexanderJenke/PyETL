@@ -1,6 +1,6 @@
 import torch
 from torch.optim import SGD, AdamW, Adam
-from torch.optim.lr_scheduler import OneCycleLR
+from torch.optim.lr_scheduler import OneCycleLR, StepLR
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
@@ -16,12 +16,15 @@ from dataset import PreparedOMOP
 sys.path.append(os.pardir)
 import model as m
 
-N_EPOCHS = 5000
-MAX_LR = 1e-5
+N_EPOCHS = 20000
+MAX_LR = 1e-4
+BS = 0.1
+p = 0.001
+fw = 1.0
 
 epsilon = 1e-16
 
-name = f"PosData_FC_FC100Dropout_Adam_LR{MAX_LR:.0e}_EP{N_EPOCHS}"
+name = f"PosData-F5_Dropout{p}SVM_AdamW_LR{MAX_LR:.0e}_Sched5k_EP{N_EPOCHS}_BS*{BS}_W*{fw}"
 name += f"__{datetime.datetime.today().strftime('%d%m%Y_%H%M%S')}"
 
 
@@ -73,9 +76,9 @@ def wmse(input, target, w=0.998, p=2):
 if __name__ == '__main__':
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-    dss = PreparedOMOP("../output/dataset_pos/")
+    dss = PreparedOMOP("../output/dataset_pos_f5/")
     trainset, testset = dss.get_datasets()
-    trainloader = DataLoader(trainset, batch_size=len(trainset), shuffle=True, pin_memory=True,
+    trainloader = DataLoader(trainset, batch_size=int(len(trainset) * BS), shuffle=True, pin_memory=True,
                              num_workers=8)
     testloader = DataLoader(testset, batch_size=len(testset), shuffle=True, pin_memory=True, num_workers=0)
 
@@ -86,12 +89,14 @@ if __name__ == '__main__':
     # model = m.FC_FC(i, 100).to(device)
 
     # optim = SGD(model.parameters(), lr=MAX_LR, momentum=0.9, weight_decay=1e-7)
-    optim = Adam(model.parameters(), lr=MAX_LR)
+    optim = AdamW(model.parameters(), lr=MAX_LR)
     # lr_sched = OneCycleLR(optim, max_lr=MAX_LR, epochs=N_EPOCHS, steps_per_epoch=len(trainloader))
+    lr_sched = StepLR(optim, step_size=5000, gamma=0.1)
 
     w = trainset.n_pos() / len(trainset)
+    w *= fw
     print(f"w: {w}")
-    loss_CEL = nn.CrossEntropyLoss(weight=torch.tensor([w, 1 - w]))
+    loss_CEL = nn.CrossEntropyLoss(weight=torch.tensor([w, 1-w]))
     # loss_wMSE = wMSELoss(weight=w)
     # loss_MSE = nn.MSELoss()
     # loss_BCE = nn.BCELoss()
@@ -109,6 +114,7 @@ if __name__ == '__main__':
             features = features.to(device)
             labels = labels_cpu.to(device)
 
+            features = F.dropout(features, p=p)
             output = model(features)
             output = (output + 1) / 2
             # output = F.softmax(output, dim=1)
@@ -130,7 +136,7 @@ if __name__ == '__main__':
             mean_loss.append(loss.item())
             loss.backward()
             optim.step()
-            # lr_sched.step()
+        lr_sched.step()
 
         mean_f = -(out_cat * (labels_cat - 1)).mean()
         mean_t = (out_cat * labels_cat).mean()
@@ -167,7 +173,7 @@ if __name__ == '__main__':
 
         log.add_scalars("mean in pred", {"test_t": mean_t, "test_f": mean_f}, global_step=epoch)
         log.add_scalar("Loss", np.mean(mean_loss), global_step=epoch)
-        # log.add_scalar("LR", lr_sched.get_lr(), global_step=epoch)
+        log.add_scalar("LR", lr_sched.get_lr(), global_step=epoch)
         log.add_scalars("Precission", {"test": p, "train": p_t}, global_step=epoch)
         log.add_scalars("Recall", {"test": r, "train": r_t}, global_step=epoch)
         log.add_scalars("F1-Score", {"test": f1, "train": f1_t}, global_step=epoch)

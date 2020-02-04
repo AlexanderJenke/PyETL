@@ -9,8 +9,10 @@ import concurrent.futures
 from tqdm import tqdm
 from shutil import rmtree
 
-OUTPUT_DIR = "output/dataset/"
+OUTPUT_DIR = "output/dataset_pos_f3/"
 DATABASE_NAME = "p21_cdm"
+FUTURE_HORIZON = 3
+ONLY_POS = True
 
 
 def call(self, sql: str):
@@ -149,7 +151,7 @@ def prepare_person(pid, *args):
 
         # patient data -> samples
         samples = ()
-        for i in range(len(dates) - 1):
+        for i in range(len(dates) - FUTURE_HORIZON):
             sample = {concept_ids[j]: r for j, r in enumerate(patient_data[:, i])}
             sample["age"] = age
             sample["female"] = int(gender_concept_id == 8532)
@@ -157,7 +159,7 @@ def prepare_person(pid, *args):
             # decubitus will be diagnosed newly next timestamp
             label = bool(set([concept_ids[j]
                               for j in range(len(concept_ids))
-                              if patient_data[j, i] == 0 and patient_data[j, i + 1] != 0]
+                              if patient_data[j, i] == 0 and patient_data[j, i + 1: i + FUTURE_HORIZON + 1].sum() != 0]
                              ) & labels)
             samples += (sample, label),
 
@@ -173,10 +175,11 @@ def split_set(pos_neg_ratio=0.1):
     negative = [f for f in os.listdir(os.path.join(OUTPUT_DIR, "0")) if f.endswith(".pkl")]
     positive = [f for f in os.listdir(os.path.join(OUTPUT_DIR, "1")) if f.endswith(".pkl")]
 
-    for f in negative[:int(len(negative) * pos_neg_ratio)]:
-        os.rename(os.path.join(OUTPUT_DIR, "0", f), os.path.join(OUTPUT_DIR, "test", f))
-    for f in negative[int(len(negative) * pos_neg_ratio):]:
-        os.rename(os.path.join(OUTPUT_DIR, "0", f), os.path.join(OUTPUT_DIR, "train", f))
+    if not ONLY_POS:
+        for f in negative[:int(len(negative) * pos_neg_ratio)]:
+            os.rename(os.path.join(OUTPUT_DIR, "0", f), os.path.join(OUTPUT_DIR, "test", f))
+        for f in negative[int(len(negative) * pos_neg_ratio):]:
+            os.rename(os.path.join(OUTPUT_DIR, "0", f), os.path.join(OUTPUT_DIR, "train", f))
     for f in positive[:int(len(positive) * pos_neg_ratio)]:
         os.rename(os.path.join(OUTPUT_DIR, "1", f), os.path.join(OUTPUT_DIR, "test", f))
     for f in positive[int(len(positive) * pos_neg_ratio):]:
