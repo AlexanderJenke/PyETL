@@ -7,6 +7,8 @@ from db import DB
 app = Flask(__name__, static_url_path='')
 
 def get_dummy_data():
+    """ returns dummy data for testing
+    """
     data = {}
     data["22"] = ("50", "w", True, ["The patient lies for a too long time in the bed.", "The patient has high blood pressure."])
     data["23"] = ("51", "w", True, ["The patient is quiet old.", "The patient has high blood pressure."])
@@ -49,22 +51,18 @@ def login():
     password = request.form["password"]
     if username == user and password == pw:
         session["logged_in"] = True
-        return redirect(url_for("config_page"))
-    return "DENIED!"
+        return redirect(url_for("patient_page"))
+    return redirect(url_for("index"))
 
 @app.route("/logout", methods = ["GET"])
 def logout():
     session["logged_in"] = False
     return redirect(url_for("index"))
 
-@app.route("/config")
-def config_page():
-    if not session.get("logged_in"):
-        return redirect(url_for("index"))
-    return render_template("config.html", host=db_host, port=db_port)
-
 @app.route("/patients", methods = ["GET"])
 def patient_page():
+    if not session.get("logged_in"):
+        return redirect(url_for("index"))
     global is_dummy_data
     if not is_dummy_data:
         global db_host
@@ -77,23 +75,17 @@ def patient_page():
         data = get_dummy_data()
     return render_template("patient.html", data=data)
 
-@app.route("/dbconfig", methods = ["GET"])
-def dbconfig():
-    global db_host
-    global db_port
-    db_host = request.args.get("host")
-    db_port = request.args.get("port")
-    return redirect(url_for("config_page"))
-
 @app.route("/pdf", methods = ["GET"])
 def create_pdf():
+    if not session.get("logged_in"):
+        return redirect(url_for("index"))
     pdf = FPDF()
     pdf.set_font("Arial", size=24)
     pdf.add_page(orientation="L")
 
     col_width = pdf.w / 15
     row_height = pdf.font_size
-    spacing = 1.5
+    spacing = 0.6
     pdf.cell(col_width, row_height * spacing, txt="Results")
     pdf.ln(row_height*spacing * 2)
     pdf.set_font("Arial", size=10)
@@ -113,7 +105,9 @@ def create_pdf():
         global db_port
         conn = DB(host=db_host, port=db_port, user=db_user, password=db_pw) 
         data = conn.get_patients_with_reasons()
+    j = -1
     for key, value in data.items():
+        j += 1
         if value[2]:
             pdf.set_fill_color(237, 150, 158)
         new_lines = ""
@@ -121,7 +115,8 @@ def create_pdf():
             new_lines += "\n" 
         x = pdf.get_x() + col_width
         y = pdf.get_y()
-        if y > 170:
+        condition = 3 * len(value[3])
+        if (j % 3) == 0 and j != 0:
             pdf.add_page(orientation="L")
             x = pdf.get_x() + col_width
             y = pdf.get_y()
@@ -137,15 +132,18 @@ def create_pdf():
         pdf.multi_cell(col_width, row_height * spacing, txt=value[1] + new_lines, border=1, fill=True)
         pdf.set_xy(x, y)
         diagnosises = ""
-        if value[2]:
-            pdf.set_font("Arial", "B", size=10)
-            pdf.set_font("Arial", size=10)
-            for reason in value[3]:
-                if len(reason) > 125:
-                    reason = reason[:125]
-                diagnosises += reason + "\n"
+        
+        pdf.set_font("Arial", "B", size=10)
+        pdf.set_font("Arial", size=10)
+        for reason in value[3]:
+            if len(reason) > 125:
+                reason = reason[:125]
+            diagnosises += reason + "\n"
+        
         pdf.multi_cell(col_width * 11, row_height * spacing, txt=diagnosises, border=1, fill=True)
         pdf.set_fill_color(238, 238, 238)
+        if value[2]:
+            pdf.image("static/warning.png",x - 50, y + 3, 5, 5)
         pdf.ln(0)
     response = make_response(pdf.output(dest='S').encode('latin-1'))
     response.headers['Content-Type'] = 'application/pdf'
