@@ -1,11 +1,12 @@
+from optparse import OptionParser
+from sys import stderr
+from tqdm import tqdm
 import pandas as pd
 import os
+
 from classes import Person
 from database import OMOP
-from optparse import OptionParser
 
-from tqdm import tqdm
-from sys import stderr
 
 
 def labor(person, database_connection, row):
