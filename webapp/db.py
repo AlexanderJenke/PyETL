@@ -16,5 +16,4 @@ class DB:
                 data[row[0]] = (row[1], row[2], row[3], [])
             if not (row[4] == None):
                 data[row[0]][3].append(row[4])
-        print(data)
         return data

@@ -27,9 +27,6 @@
       <li class="nav-item">
         <a class="nav-link" href="pdf">Export PDF</a>
       </li>
-      <li class="nav-item">
-        <a class="nav-link" href="config">Config</a>
-      </li>
       <li class="nav-item" style="display:none">
         <a class="nav-link" href="csv">CSV Files</a>
       </li>
@@ -75,6 +72,7 @@
 				<th> Patient ID </th>
 				<th> Birthday </th>
 				<th> Gender </th>
+				<th></th>
 			</tr>
 		</thead>
 		<tbody>
@@ -84,11 +82,16 @@
 				<td>{{row}}</td> 
 				<td>{{data[row][0]}}</td>
 				<td>{{data[row][1]}}</td>
+				{% if data[row][2]%}
+				<td><img src="warning.png" height="10"></img></td>
+				{% else %}
+				<td></td>
+				{% endif %}
 			</tr>
 			{% if data[row][2] %}
 			<!--tr id="row{{row}}" class="collapse" style="background-color:#eeeeee"-->
 			<tr id="{{row}}.5"  style="background-color:#eeeeee;">
-				<td colspan="3" style="margin-top:0px;margin-bottom:0px;padding-top:0px;padding-bottom:0px;">
+				<td colspan="4" style="margin-top:0px;margin-bottom:0px;padding-top:0px;padding-bottom:0px;">
 					<div class="collapse" id="row{{row}}" style="padding-left:5px;margin-bottom:10px;margin-top:0px;background-color:#ffffff">	
 						<span style="font-size:large;margin-bottom:10px">The algorithm found there is a potential risk that the patient may or will 
 							may suffer decubitus. </span></br>
@@ -106,7 +109,7 @@
 			</tr>
 			{% else %}
 			<tr id="{{row}}.5"  style="background-color:#eeeeee;">
-				<td colspan="3" style="margin-top:0px;margin-bottom:0px;padding-top:0px;padding-bottom:0px;">
+				<td colspan="4" style="margin-top:0px;margin-bottom:0px;padding-top:0px;padding-bottom:0px;">
 					<div class="collapse" id="row{{row}}" style="padding-left:5px;margin-bottom:10px;margin-top:0px;background-color:#ffffff">	
 						<span style="font-size:large;margin-bottom:10px">It was not detected that the patient suffers or will suffer from decubitus. 
 						However, there is still a residual risk, as the algorithm is not infallible.</span></br>
