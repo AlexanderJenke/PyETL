@@ -57,15 +57,6 @@ class RESULT_DB(DB_Connector):
 class NewestOMOP:
     def __init__(self, disease_lut):
 
-        def get_table(tablename: str, colum_map: dict, condition=1):
-            cols = ""
-            for col in sorted(colum_map.keys()):
-                cols += f"{col},"
-
-            rows = omop(f""" SELECT {cols[:-1]} FROM {DATABASE_NAME}.{tablename} WHERE {condition}""")
-            colum_names = [v for k, v in sorted(colum_map.items(), key=lambda x: x[0])]
-            return [{colum_names[i]: v for i, v in enumerate(row)} for row in rows]
-
         self.disease_lut = disease_lut
 
         with OMOP_DB() as omop:
@@ -106,78 +97,7 @@ class NewestOMOP:
 
             person_ids = omop(f"select distinct person_id from {DATABASE_NAME}.person")
 
-            self.data = []
-            for pid, *args in tqdm(person_ids, desc="Loding patient data"):
-                gender_concept_id, year_of_birth = omop(f"""SELECT gender_concept_id, year_of_birth 
-                                                                      FROM {DATABASE_NAME}.person
-                                                                      WHERE person_id='{pid}'""")[-1]
-                age = date.today().year - year_of_birth
-
-                # get data
-                obserations = get_table("observation",
-                                        {"observation_concept_id": "id",
-                                         "value_as_number": "value",
-                                         "observation_date": "date",
-                                         },
-                                        f"person_id='{pid}'")
-
-                measurements = get_table("measurement",
-                                         {"measurement_concept_id": "id",
-                                          "value_as_number": "value",
-                                          "measurement_date": "date",
-                                          },
-                                         f"person_id='{pid}'")
-
-                conditions = get_table("condition_occurrence",
-                                       {"condition_concept_id": "id",
-                                        "'1'": "value",  #
-                                        "condition_start_date": "date",
-                                        "condition_end_date": "end_date",
-                                        },
-                                       f"person_id='{pid}'")
-
-                procedures = get_table("procedure_occurrence",
-                                       {"procedure_concept_id": "id",
-                                        "quantity": "value",
-                                        "procedure_date": "date",
-                                        },
-                                       f"person_id='{pid}'")
-
-                data = obserations + measurements + conditions + procedures
-
-                concept_ids = sorted(set([snomed_lut[str(row['id'])] for row in data]))
-                concept_id_lut = {id: i for i, id in enumerate(concept_ids)}
-                dates = sorted(set([row['date'] for row in data]))
-
-                sample = {}
-
-                # entrys -> patient data
-                for row in data:
-                    concept_id = snomed_lut[str(row['id'])]
-
-                    if row['value'] is None:
-                        value = 1.0
-                    else:
-                        try:
-                            value = float(row['value'])
-                        except ValueError:
-                            print(f"ERROR: {row['value']} can not be converted into float! \n{row}")
-                            continue
-
-                    if 'end_date' in row and row['end_date'] is not None and row['end_date'] < dates[-1]:
-                        continue
-
-                    sample[concept_id] = value
-
-                sample["age"] = age
-                sample["female"] = int(gender_concept_id == 8532)
-                sample["male"] = int(gender_concept_id == 8507)
-
-                ids = sorted([self.disease_lut[i]['cid'] for i in self.disease_lut])
-
-                feature = [sample[i] if i in sample else 0 for i in ids]
-
-                self.data.append((pid, feature))
+            self.data = [p[0] for p in person_ids]
 
         """
         ids = sorted(set(
@@ -198,9 +118,86 @@ class NewestOMOP:
         """
 
     def __getitem__(self, item):
-        return torch.tensor(self.data[item][0],
-                            dtype=torch.long), torch.tensor(self.data[item][1],
-                                                            dtype=torch.float32)
+        with OMOP_DB() as omop:
+            def get_table(tablename: str, colum_map: dict, condition=1):
+                cols = ""
+                for col in sorted(colum_map.keys()):
+                    cols += f"{col},"
+
+                rows = omop(f""" SELECT {cols[:-1]} FROM {DATABASE_NAME}.{tablename} WHERE {condition}""")
+                colum_names = [v for k, v in sorted(colum_map.items(), key=lambda x: x[0])]
+                return [{colum_names[i]: v for i, v in enumerate(row)} for row in rows]
+
+            pid = self.data[item]
+
+            gender_concept_id, year_of_birth = omop(f"""SELECT gender_concept_id, year_of_birth 
+                                                                          FROM {DATABASE_NAME}.person
+                                                                          WHERE person_id='{pid}'""")[-1]
+            age = date.today().year - year_of_birth
+
+            # get data
+            obserations = get_table("observation",
+                                    {"observation_concept_id": "id",
+                                     "value_as_number": "value",
+                                     "observation_date": "date",
+                                     },
+                                    f"person_id='{pid}'")
+
+            measurements = get_table("measurement",
+                                     {"measurement_concept_id": "id",
+                                      "value_as_number": "value",
+                                      "measurement_date": "date",
+                                      },
+                                     f"person_id='{pid}'")
+
+            conditions = get_table("condition_occurrence",
+                                   {"condition_concept_id": "id",
+                                    "'1'": "value",  #
+                                    "condition_start_date": "date",
+                                    "condition_end_date": "end_date",
+                                    },
+                                   f"person_id='{pid}'")
+
+            procedures = get_table("procedure_occurrence",
+                                   {"procedure_concept_id": "id",
+                                    "quantity": "value",
+                                    "procedure_date": "date",
+                                    },
+                                   f"person_id='{pid}'")
+
+            data = obserations + measurements + conditions + procedures
+
+            dates = sorted(set([row['date'] for row in data]))
+
+            sample = {}
+
+            # entrys -> patient data
+            for row in data:
+                concept_id = self.snomed_lut[str(row['id'])]
+
+                if row['value'] is None:
+                    value = 1.0
+                else:
+                    try:
+                        value = float(row['value'])
+                    except ValueError:
+                        print(f"ERROR: {row['value']} can not be converted into float! \n{row}")
+                        continue
+
+                if 'end_date' in row and row['end_date'] is not None and row['end_date'] < dates[-1]:
+                    continue
+
+                sample[concept_id] = value
+
+            sample["age"] = age
+            sample["female"] = int(gender_concept_id == 8532)
+            sample["male"] = int(gender_concept_id == 8507)
+
+            ids = sorted([self.disease_lut[i]['cid'] for i in self.disease_lut])
+
+            feature = [sample[i] if i in sample else 0 for i in ids]
+
+            return torch.tensor(pid, dtype=torch.long), torch.tensor(feature, dtype=torch.float32)
 
     def __len__(self):
         return len(self.data)
