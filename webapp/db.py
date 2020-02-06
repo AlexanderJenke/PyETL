@@ -2,13 +2,13 @@ import psycopg2 as db
 
 class DB:
 
-    def __init__(self, dbname='OHDSI', user='ohdsi_admin_user', host='localhost', port=5432 , password='omop'):
+    def __init__(self, dbname='ML_RESULTS', user='ml', host='localhost', port=5432 , password='1234'):
         self.conn = db.connect(f"dbname='{dbname}' user='{user}' host='{host}' port='{port}' password='{password}'")
         print(user)
         self.cursor = self.conn.cursor()
 
     def get_patients_with_reasons(self):
-        query = "SELECT p.patient_id, p.day_of_birth, p.estimation, d.diagnosis FROM ml_res.patient p JOIN ml_res.diagnosis d ON p.patient_id = d.patient_id;"
+        query = "SELECT p.patient_id, p.birthday, p.prediction, d.reason FROM results.PATIENT p LEFT JOIN results.reason d ON p.patient_id = d.patient_id;"
         self.cursor.execute(query)
         data = {}
         for row in self.cursor.fetchall():
