@@ -73,29 +73,31 @@
 		<thead>
 			<tr>
 				<th> Patient ID </th>
-				<th> Age </th>
+				<th> Birthday </th>
+				<th> Gender </th>
 			</tr>
 		</thead>
 		<tbody>
 			{% for row in data %}
 			<tr id="{{row}}" 
-	       {% if data[row][1] %} class="table-danger" {% else %} style="background-color:#eeeeee" {% endif %} onclick="togglePatient('row{{row}}')"> 
+	       {% if data[row][2] %} class="table-danger" {% else %} style="background-color:#eeeeee" {% endif %} onclick="togglePatient('row{{row}}')"> 
 				<td>{{row}}</td> 
 				<td>{{data[row][0]}}</td>
+				<td>{{data[row][1]}}</td>
 			</tr>
-			{% if data[row][1] %}
+			{% if data[row][2] %}
 			<!--tr id="row{{row}}" class="collapse" style="background-color:#eeeeee"-->
 			<tr id="{{row}}.5"  style="background-color:#eeeeee;">
-				<td colspan="2" style="margin-top:0px;margin-bottom:0px;padding-top:0px;padding-bottom:0px;">
+				<td colspan="3" style="margin-top:0px;margin-bottom:0px;padding-top:0px;padding-bottom:0px;">
 					<div class="collapse" id="row{{row}}" style="padding-left:5px;margin-bottom:10px;margin-top:0px;background-color:#ffffff">	
 						<span style="font-size:large;margin-bottom:10px">The algorithm found there is a potential risk that the patient may or will 
 							may suffer decubitus. </span></br>
 						<!--ul class="list-group">
-							{% for i in data[row][2] %}
+							{% for i in data[row][3] %}
 							<li class="list-group-item">{{i}}</li>
 							{% endfor %}
                                         	</ul-->
-						{% for i in data[row][2] %}
+						{% for i in data[row][3] %}
 						<span>{{i}}</span></br>
 						{% endfor %}
 					</div>
@@ -104,12 +106,12 @@
 			</tr>
 			{% else %}
 			<tr id="{{row}}.5"  style="background-color:#eeeeee;">
-				<td colspan="2" style="margin-top:0px;margin-bottom:0px;padding-top:0px;padding-bottom:0px;">
+				<td colspan="3" style="margin-top:0px;margin-bottom:0px;padding-top:0px;padding-bottom:0px;">
 					<div class="collapse" id="row{{row}}" style="padding-left:5px;margin-bottom:10px;margin-top:0px;background-color:#ffffff">	
 						<span style="font-size:large;margin-bottom:10px">It was not detected that the patient suffers or will suffer from decubitus. 
 						However, there is still a residual risk, as the algorithm is not infallible.</span></br>
 						<!--ul class="list-group">
-							{% for i in data[row][2] %}
+							{% for i in data[row][3] %}
 							<li class="list-group-item">{{i}}</li>
 							{% endfor %}
                                         	</ul-->

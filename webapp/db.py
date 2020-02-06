@@ -8,12 +8,13 @@ class DB:
         self.cursor = self.conn.cursor()
 
     def get_patients_with_reasons(self):
-        query = "SELECT p.patient_id, p.birthday, p.prediction, d.reason FROM results.PATIENT p LEFT JOIN results.reason d ON p.patient_id = d.patient_id;"
+        query = "SELECT p.patient_id, p.birthday, p.gender, p.prediction, d.reason FROM results.PATIENT p LEFT JOIN results.reason d ON p.patient_id = d.patient_id;"
         self.cursor.execute(query)
         data = {}
         for row in self.cursor.fetchall():
             if row[0] not in data:
-                data[row[0]] = (row[1], row[2], [])
-            if not (row[3] == None):
-                data[row[0]][2].append(row[3])
+                data[row[0]] = (row[1], row[2], row[3], [])
+            if not (row[4] == None):
+                data[row[0]][3].append(row[4])
+        print(data)
         return data

@@ -97,6 +97,7 @@ def patient_page():
         global db_port
         conn = DB(host=db_host, port=db_port, user=db_user, password=db_pw) 
         data = conn.get_patients_with_reasons()
+        print(data)
     else:
         data = get_dummy_data()
     return render_template("patient.html", data=data)
@@ -172,7 +173,7 @@ if __name__ == "__main__":
     global user 
     global pw 
     opts = get_default_opts()
-    is_dummy_data = opts.dummy_data
+    is_dummy_data = int(opts.dummy_data)
     db_user = opts.db_user
     db_port = opts.db_port
     db_host = opts.db_host
