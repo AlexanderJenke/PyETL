@@ -371,8 +371,8 @@ if __name__ == "__main__":
     omop = OMOP(host=opts.db_host, port=opts.db_port)
 
     # add one patient after another
-    for id in tqdm(fall_pd["patienten_nummer"].unique()):
-        patient(id)
+    for id in tqdm(files_pd['fall']["patienten_nummer"].unique()):
+        patient(id, omop, files_pd)
 
     '''
     # insert multiple patients in parallel into Database (BusError occuring -> not working)
