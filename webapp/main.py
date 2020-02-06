@@ -8,51 +8,27 @@ app = Flask(__name__, static_url_path='')
 
 def get_dummy_data():
     data = {}
-    data["22"] = ("50", True, ["The patient lies for a too long time in the bed.", "The patient has high blood pressure."])
-    data["23"] = ("51", True, ["The patient is quiet old.", "The patient has high blood pressure."])
-    data["24"] = ("11", False, [])
-    data["25"] = ("2", False, [])
-    data["26"] = ("4", False, [])
-    data["27"] = ("50", True, ["The patient lies for a too long time in the bed.", "The patient has high blood pressure."])
-    data["28"] = ("50", True, ["The patient lies for a too long time in the bed.", "The patient has high blood pressure."])
-    data["29"] = ("50", True, ["The patient lies for a too long time in the bed.", "The patient has high blood pressure."])
-    data["32"] = ("50", True, ["The patient lies for a too long time in the bed.", "The patient has high blood pressure."])
-    data["32"] = ("50", True, ["The patient lies for a too long time in the bed.", "The patient has high blood pressure."])
-    data["33"] = ("51", True, ["The patient is quiet old.", "The patient has high blood pressure."])
-    data["34"] = ("11", False, [])
-    data["45"] = ("2", False, [])
-    data["56"] = ("4", False, [])
-    data["213"] = ("51", True, ["The patient is quiet old.", "The patient has high blood pressure."])
-    data["234"] = ("11", False, [])
-    data["252"] = ("2", False, [])
-    data["216"] = ("4", False, [])
-    data["243"] = ("51", True, ["The patient is quiet old.", "The patient has high blood pressure."])
-    data["244"] = ("11", False, [])
-    data["235"] = ("2", False, [])
-    data["256"] = ("4", False, [])
-    data["213"] = ("51", True, ["The patient is quiet old.", "The patient has high blood pressure."])
-    data["124"] = ("11", False, [])
-    data["125"] = ("2", False, [])
-    data["126"] = ("4", False, [])
-    data["123"] = ("51", True, ["The patient is quiet old.", "The patient has high blood pressure."])
-    data["1224"] = ("11", False, [])
-    data["25"] = ("2", False, [])
-    data["24126"] = ("4", False, [])
-    data["22"] = ("50", True, ["The patient lies for a too long time in the bed.", "The patient has high blood pressure."])
-    data["23"] = ("51", True, ["The patient is quiet old.", "The patient has high blood pressure."])
-    data["24"] = ("11", False, [])
-    data["25"] = ("2", False, [])
-    data["26"] = ("4", False, [])
-    data["22"] = ("50", True, ["The patient lies for a too long time in the bed.", "The patient has high blood pressure."])
-    data["23"] = ("51", True, ["The patient is quiet old.", "The patient has high blood pressure."])
-    data["24"] = ("11", False, [])
-    data["25"] = ("2", False, [])
-    data["26"] = ("4", False, [])
-    data["22"] = ("50", True, ["The patient lies for a too long time in the bed.", "The patient has high blood pressure."])
-    data["23"] = ("51", True, ["The patient is quiet old.", "The patient has high blood pressure."])
-    data["24"] = ("11", False, [])
-    data["25"] = ("2", False, [])
-    data["26"] = ("4", False, [])
+    data["22"] = ("50", "w", True, ["The patient lies for a too long time in the bed.", "The patient has high blood pressure."])
+    data["23"] = ("51", "w", True, ["The patient is quiet old.", "The patient has high blood pressure."])
+    data["24"] = ("11", "w",False, [])
+    data["25"] = ("2", "w", False, [])
+    data["26"] = ("4", "w", False, [])
+    data["27"] = ("50", "w", True, ["The patient lies for a too long time in the bed.", "The patient has high blood pressure."])
+    data["28"] = ("50", "w", True, ["The patient lies for a too long time in the bed.", "The patient has high blood pressure."])
+    data["29"] = ("50", "w", True, ["The patient lies for a too long time in the bed.", "The patient has high blood pressure."])
+    data["32"] = ("50", "w", True, ["The patient lies for a too long time in the bed.", "The patient has high blood pressure."])
+    data["32"] = ("50", "m", True, ["The patient lies for a too long time in the bed.", "The patient has high blood pressure."])
+    data["33"] = ("51", "m", True, ["The patient is quiet old.", "The patient has high blood pressure."])
+    data["34"] = ("11", "m", False, [])
+    data["45"] = ("2", "m", False, [])
+    data["56"] = ("4", "m", False, [])
+    data["213"] = ("51", "m", True, ["The patient is quiet old.", "The patient has high blood pressure."])
+    data["234"] = ("11", "m", False, [])
+    data["252"] = ("2", "m",False, [])
+    data["216"] = ("4", "m", False, [])
+    data["243"] = ("51", "m", True, ["The patient is quiet old.", "The patient has high blood pressure."])
+    data["244"] = ("11", "m",False, [])
+    data["235"] = ("2", "d",False, [])
     return data
 
 @app.route("/")
@@ -97,7 +73,6 @@ def patient_page():
         global db_port
         conn = DB(host=db_host, port=db_port, user=db_user, password=db_pw) 
         data = conn.get_patients_with_reasons()
-        print(data)
     else:
         data = get_dummy_data()
     return render_template("patient.html", data=data)
@@ -116,7 +91,7 @@ def create_pdf():
     pdf.set_font("Arial", size=24)
     pdf.add_page(orientation="L")
 
-    col_width = pdf.w / 11
+    col_width = pdf.w / 15
     row_height = pdf.font_size
     spacing = 1.5
     pdf.cell(col_width, row_height * spacing, txt="Results")
@@ -124,14 +99,25 @@ def create_pdf():
     pdf.set_font("Arial", size=10)
     pdf.set_fill_color(238, 238, 238)
     pdf.cell(col_width, row_height * spacing, txt="Patient ID", border=1,fill = True)
-    pdf.cell(col_width, row_height * spacing, txt="Patient birthday", border=1, fill=True)
-    pdf.cell(col_width * 8, row_height * spacing, txt="Diagnosis", border=1, fill=True)
+    pdf.cell(col_width, row_height * spacing, txt="Birthday", border=1, fill=True)
+    pdf.cell(col_width, row_height * spacing, txt="Gender", border=1, fill=True)
+    pdf.cell(col_width * 11, row_height * spacing, txt="Reason", border=1, fill=True)
     pdf.ln(spacing * row_height)
+    global is_dummy_data
+    if is_dummy_data:
+        data = get_dummy_data()
+    else: 
+        global db_host
+        global db_port
+        global db_user
+        global db_port
+        conn = DB(host=db_host, port=db_port, user=db_user, password=db_pw) 
+        data = conn.get_patients_with_reasons()
     for key, value in data.items():
         if value[2]:
             pdf.set_fill_color(237, 150, 158)
         new_lines = ""
-        for i in range(len(value[2])):
+        for i in range(len(value[3])):
             new_lines += "\n" 
         x = pdf.get_x() + col_width
         y = pdf.get_y()
@@ -139,23 +125,26 @@ def create_pdf():
             pdf.add_page(orientation="L")
             x = pdf.get_x() + col_width
             y = pdf.get_y()
-        print(key, x,y)
-        pdf.multi_cell(col_width, row_height * spacing, txt=key + new_lines, border=1, fill=True) 
+        pdf.multi_cell(col_width, row_height * spacing, txt=str(key) + new_lines, border=1, fill=True) 
         pdf.set_xy(x, y)
         x = pdf.get_x() + col_width
         y = pdf.get_y()
-        print(key, x, y)
-        pdf.multi_cell(col_width, row_height * spacing, txt=value[0] + new_lines, border=1, fill=True)
+
+        pdf.multi_cell(col_width, row_height * spacing, txt=value[0] + new_lines, border=1, fill=True) 
+        pdf.set_xy(x, y)
+        x = pdf.get_x() + col_width
+        y = pdf.get_y()
+        pdf.multi_cell(col_width, row_height * spacing, txt=value[1] + new_lines, border=1, fill=True)
         pdf.set_xy(x, y)
         diagnosises = ""
         if value[2]:
             pdf.set_font("Arial", "B", size=10)
             pdf.set_font("Arial", size=10)
-            for reason in value[2]:
+            for reason in value[3]:
                 if len(reason) > 125:
                     reason = reason[:125]
                 diagnosises += reason + "\n"
-        pdf.multi_cell(col_width * 8, row_height * spacing, txt=diagnosises, border=1, fill=True)
+        pdf.multi_cell(col_width * 11, row_height * spacing, txt=diagnosises, border=1, fill=True)
         pdf.set_fill_color(238, 238, 238)
         pdf.ln(0)
     response = make_response(pdf.output(dest='S').encode('latin-1'))
