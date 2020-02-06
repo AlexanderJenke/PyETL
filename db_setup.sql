@@ -68,11 +68,11 @@ ALTER TABLE results.patient
 GRANT ALL ON TABLE results.patient TO ml_group;
 
 
--- Table: results.reasons
+-- Table: results.reason
 
--- DROP TABLE results.reasons;
+-- DROP TABLE results.reason;
 
-CREATE TABLE results.reasons
+CREATE TABLE results.reason
 (
     patient_id bigint NOT NULL,
     reason character varying(256) COLLATE pg_catalog."default",
@@ -84,9 +84,9 @@ WITH (
 )
 TABLESPACE pg_default;
 
-ALTER TABLE results.reasons
+ALTER TABLE results.reason
     OWNER to ml;
 
-GRANT ALL ON TABLE results.reasons TO ml;
+GRANT ALL ON TABLE results.reason TO ml;
 
-GRANT ALL ON TABLE results.reasons TO ml_group;
+GRANT ALL ON TABLE results.reason TO ml_group;

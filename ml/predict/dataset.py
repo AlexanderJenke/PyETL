@@ -210,7 +210,7 @@ if __name__ == '__main__':
     db = RESULT_DB()
     res = db("""select count(reason) as cnt, reason
                 from results.patient 
-                p join results.reasons r 
+                p join results.reason r 
                 on p.patient_id=r.patient_id 
                 where prediction=True 
                 group by reason

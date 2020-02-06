@@ -71,7 +71,7 @@ if __name__ == '__main__':
 
         # clear old data from database
         result_db(f"DELETE FROM results.patient  WHERE patient_id='{pid}' RETURNING ''")
-        result_db(f"DELETE FROM results.reasons  WHERE patient_id='{pid}' RETURNING ''")
+        result_db(f"DELETE FROM results.reason  WHERE patient_id='{pid}' RETURNING ''")
 
         # store results in database
         result_db(f"""INSERT INTO results.patient (patient_id, prediction, gender, birthday, zip, city, timestamp) 
@@ -105,7 +105,7 @@ if __name__ == '__main__':
             else:
                 reason = f'{reason_text}'
 
-            result_db(f"""INSERT INTO results.reasons (patient_id, reason) 
+            result_db(f"""INSERT INTO results.reason (patient_id, reason) 
                           VALUES ('{pid}', '{reason}')
                           RETURNING '' """)
 
