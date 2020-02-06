@@ -4,7 +4,7 @@ from sys import stderr
 from datetime import date
 from tqdm import tqdm
 
-DATABASE_NAME = "p21_cdm"
+DATABASE_NAME = "p21_cdm"  # "synpuf_cdm"
 
 
 class DB_Connector:
