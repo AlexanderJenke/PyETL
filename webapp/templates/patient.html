@@ -42,8 +42,10 @@
 <div class="container">
 
 	<input id ="idFilter" type="text" class="form-control" placeholder="Filter table by patient ID" onkeyup="filterTableById()" style="margin-bottom:12px"/>
-	<button class="btn btn-primary" onclick="sortTable()" style="margin-bottom:20px">Sort values by color</button>
-	<button class="btn btn-primary" onclick="sortBack()" style="margin-bottom:20px">Recover the original order of the table</button>
+	<button class="btn btn-primary" onclick="sortTable()" style="margin-bottom:20px">Sort rows by color</button>
+	<button class="btn btn-primary" onclick="sortBack2()" style="margin-bottom:20px">Sort rows by ID</button>
+	<button class="btn btn-primary" onclick="sort_timestamp()" style="margin-bottom:20px">Sort rows by timestamp</button>
+	<button class="btn btn-primary" onclick="sort_fab()" style="margin-bottom:20px">Sort rows by care site</button>
 	<button class="btn" data-toggle="modal" data-target="#myModal" style="margin-bottom:20px;float:right;"><i class="fa fa-question-circle fa-2x"></i></button>
 
 	<div class="modal fade" id="myModal" role="dialog">
@@ -72,6 +74,8 @@
 				<th> Patient ID </th>
 				<th> Birthday </th>
 				<th> Gender </th>
+				<th> timestamp</th>
+				<th> care site</th>
 				<th></th>
 			</tr>
 		</thead>
@@ -81,7 +85,9 @@
 	       {% if data[row][2] %} class="table-danger" {% else %} style="background-color:#eeeeee" {% endif %} onclick="togglePatient('row{{row}}')"> 
 				<td>{{row}}</td> 
 				<td>{{data[row][0]}}</td>
-				<td>{{data[row][1]}}</td>
+				<td>{{data[row][1]}}</td>	
+				<td>{{data[row][4]}}</td>
+				<td>{{data[row][5]}}</td>
 				{% if data[row][2]%}
 				<td><img src="warning.png" height="10"></img></td>
 				{% else %}
@@ -91,10 +97,12 @@
 			{% if data[row][2] %}
 			<!--tr id="row{{row}}" class="collapse" style="background-color:#eeeeee"-->
 			<tr id="{{row}}.5"  style="background-color:#eeeeee;">
-				<td colspan="4" style="margin-top:0px;margin-bottom:0px;padding-top:0px;padding-bottom:0px;">
+				<td colspan="6" style="margin-top:0px;margin-bottom:0px;padding-top:0px;padding-bottom:0px;">
 					<div class="collapse" id="row{{row}}" style="padding-left:5px;margin-bottom:10px;margin-top:0px;background-color:#ffffff">	
 						<span style="font-size:large;margin-bottom:10px">The algorithm found there is a potential risk that the patient may or will 
 							may suffer decubitus. </span></br>
+						<span style="font-size:large;margin-bottom:10px" >Reasons:
+						</span></br>
 						<!--ul class="list-group">
 							{% for i in data[row][3] %}
 							<li class="list-group-item">{{i}}</li>
@@ -109,10 +117,21 @@
 			</tr>
 			{% else %}
 			<tr id="{{row}}.5"  style="background-color:#eeeeee;">
-				<td colspan="4" style="margin-top:0px;margin-bottom:0px;padding-top:0px;padding-bottom:0px;">
+				<td colspan="6" style="margin-top:0px;margin-bottom:0px;padding-top:0px;padding-bottom:0px;">
 					<div class="collapse" id="row{{row}}" style="padding-left:5px;margin-bottom:10px;margin-top:0px;background-color:#ffffff">	
-						<span style="font-size:large;margin-bottom:10px">It was not detected that the patient suffers or will suffer from decubitus. 
-						However, there is still a residual risk, as the algorithm is not infallible.</span></br>
+						<span style="font-size:large;margin-bottom:10px">The algorithm does not expect the patient to develop a pressure ulcer.
+							However the following risk factors were discovered.</span></br>
+						<span style="font-size:large;margin-bottom:10px" >Reasons:
+						</span></br>
+						<!--ul class="list-group">
+							{% for i in data[row][3] %}
+							<li class="list-group-item">{{i}}</li>
+							{% endfor %}
+                                        	</ul-->
+						{% for i in data[row][3] %}
+						<span>{{i}}</span></br>
+						{% endfor %}
+
 						<!--ul class="list-group">
 							{% for i in data[row][3] %}
 							<li class="list-group-item">{{i}}</li>

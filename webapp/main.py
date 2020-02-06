@@ -55,8 +55,12 @@ def send_css(path):
 def login():
     """authenticates the user, if username and password are correct
     """
+
+    # extract username and password from the request
     username = request.form["username"]
     password = request.form["password"]
+
+    # compare if they match, otherwise redirect to the login page again
     if username == user and password == pw:
         session["logged_in"] = True
         return redirect(url_for("patient_page"))
@@ -75,6 +79,8 @@ def patient_page():
     """
     if not session.get("logged_in"):
         return redirect(url_for("index"))
+
+    # if dummy data is enabled, load the dummy data or else load the data from the database
     global is_dummy_data
     if not is_dummy_data:
         global db_host
@@ -85,14 +91,19 @@ def patient_page():
         data = conn.get_patients_with_reasons()
     else:
         data = get_dummy_data()
+    print(data[0])
     return render_template("patient.html", data=data)
 
 @app.route("/pdf", methods = ["GET"])
 def create_pdf():
     """ prints patient data as PDF file
     """
+
+    # check if the user is logged in
     if not session.get("logged_in"):
         return redirect(url_for("index"))
+
+    # create PDF with meta data
     pdf = FPDF()
     pdf.set_font("Arial", size=24)
     pdf.add_page(orientation="L")
@@ -104,11 +115,17 @@ def create_pdf():
     pdf.ln(row_height*spacing * 2)
     pdf.set_font("Arial", size=10)
     pdf.set_fill_color(238, 238, 238)
+
+    # add the table head
     pdf.cell(col_width, row_height * spacing, txt="Patient ID", border=1,fill = True)
     pdf.cell(col_width, row_height * spacing, txt="Birthday", border=1, fill=True)
     pdf.cell(col_width, row_height * spacing, txt="Gender", border=1, fill=True)
-    pdf.cell(col_width * 11, row_height * spacing, txt="Reason", border=1, fill=True)
+    pdf.cell(col_width, row_height * spacing, txt="Timestamp", border=1, fill=True)
+    pdf.cell(col_width, row_height * spacing, txt="Fab", border=1, fill=True)
+    pdf.cell(col_width * 9, row_height * spacing, txt="Reason", border=1, fill=True)
     pdf.ln(spacing * row_height)
+    
+    # load dummy data, if dummy data is enabled otherwise load the data from the database
     global is_dummy_data
     if is_dummy_data:
         data = get_dummy_data()
@@ -119,6 +136,8 @@ def create_pdf():
         global db_port
         conn = DB(host=db_host, port=db_port, user=db_user, password=db_pw) 
         data = conn.get_patients_with_reasons()
+
+    # inserts the patient content into the PDF
     j = -1
     for key, value in data.items():
         j += 1
@@ -129,11 +148,14 @@ def create_pdf():
             new_lines += "\n" 
         x = pdf.get_x() + col_width
         y = pdf.get_y()
-        condition = 3 * len(value[3])
+        
+        # only prints 3 patients into one page
         if (j % 3) == 0 and j != 0:
             pdf.add_page(orientation="L")
             x = pdf.get_x() + col_width
             y = pdf.get_y()
+
+        # inserts id, gender and birthday
         pdf.multi_cell(col_width, row_height * spacing, txt=str(key) + new_lines, border=1, fill=True) 
         pdf.set_xy(x, y)
         x = pdf.get_x() + col_width
@@ -145,19 +167,31 @@ def create_pdf():
         y = pdf.get_y()
         pdf.multi_cell(col_width, row_height * spacing, txt=value[1] + new_lines, border=1, fill=True)
         pdf.set_xy(x, y)
+
+        x = pdf.get_x() + col_width
+        y = pdf.get_y()
+
+        pdf.multi_cell(col_width, row_height * spacing, txt=str(value[4]) + new_lines, border=1, fill=True) 
+        pdf.set_xy(x, y)
+        x = pdf.get_x() + col_width
+        y = pdf.get_y()
+        pdf.multi_cell(col_width, row_height * spacing, txt=str(value[5]) + new_lines, border=1, fill=True)
+        pdf.set_xy(x, y)
+        # inserts reasons for developing a decubitus
         diagnosises = ""
-        
         pdf.set_font("Arial", "B", size=10)
         pdf.set_font("Arial", size=10)
         for reason in value[3]:
-            if len(reason) > 125:
-                reason = reason[:125]
+            if len(reason) > 100:
+                reason = reason[:100]
             diagnosises += reason + "\n"
         
-        pdf.multi_cell(col_width * 11, row_height * spacing, txt=diagnosises, border=1, fill=True)
+        pdf.multi_cell(col_width * 9, row_height * spacing, txt=diagnosises, border=1, fill=True)
         pdf.set_fill_color(238, 238, 238)
+
+        # add warning symbol if the there is a risk in getting decubitus
         if value[2]:
-            pdf.image("static/warning.png",x - 50, y + 3, 5, 5)
+            pdf.image("static/warning.png",x - 90, y + 3, 5, 5)
         pdf.ln(0)
     response = make_response(pdf.output(dest='S').encode('latin-1'))
     response.headers['Content-Type'] = 'application/pdf'
@@ -168,6 +202,8 @@ def create_pdf():
 if __name__ == "__main__":
     """ starts a flask server instance
     """
+
+    # loads setting of database and whether dummy data should be used or not
     global is_dummy_data 
     global db_host 
     global db_port 
