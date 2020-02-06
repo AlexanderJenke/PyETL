@@ -1,0 +1,109 @@
+As shown in Table \ref{risks} four major risk classes are considered. 
+Firstly data loss or manipulation due to bugs, secondly the nonavailability of the service, thirdly attacks by an unauthorized person and lastly the risks of wrong patient treatment due to the software.
+
+\begin{table}[htbp]
+\begin{tabular}{|c|c|c|c|}
+	\hline
+	 &\textbf{ Risk Description} & \textbf{Risk Likelihood} & \textbf{Risk Severity}\\
+	\hline
+    \hline
+    %0 & nur für Informatiker & prabably & over 9000\\
+    %\hline
+    %\hline
+    % data deletion manipulation by bugs
+	1 & Patient data gets deleted/modified & low & high \\
+	& by a bug in the front-end &&\\
+	\hline
+	2 & Patient data gets deleted/modified & high & high \\
+	& by a bug in the ETL process &&\\
+	\hline
+	3 & Patient data gets deleted/modified & low & high \\
+	& by a bug in the decubitus prediction back-end &&\\
+	\hline
+	4 & Data of decubitus prediction gets deleted/modified & medium & medium \\
+	& by a bug in the front-end &&\\
+	\hline
+	5 & Data of decubitus prediction gets deleted/modified & low & medium \\
+	& by a bug in the ETL process &&\\
+	\hline
+	6 & Data of decubitus prediction gets deleted/modified & high & medium \\
+	& by a bug in the decubitus prediction back-end &&\\
+	\hline
+	\hline
+	% dos 
+	7 & The front-end is unavailable due to a dos attack & low & low \\
+	\hline
+	\hline
+	% data manipulation by person
+	8 & Unauthorized person tries to delete/manipulate & medium & high \\
+	& data via the front-end & & \\
+	\hline
+	9 & Unauthorized person tries to get & medium & high \\
+	& access to patient data via the front-end & & \\
+	\hline
+	\hline
+	% effect on treatment
+	10 & Patient is erroneously treated & middle & middle \\
+	& due to the decubitus prediction && \\
+	\hline
+    11 & Patient is erroneously not treated  & middle & high \\
+	& due to the decubitus prediction && \\
+	\hline
+\end{tabular}
+\caption{Risk analysis}
+\label{risks}
+\end{table}
+
+In the first risk, patient data in the OMOP database gets deleted or modified by a bug in the front-end. 
+The severity of this risk is high because the correctness of the patient data is crucial and the data in the database in will not be checked on its correctness once it is inserted.  
+The likelihood of this happening is low because the front-end never needs to write into the OMOP database and therefore the possibility of changing the data can be minimized by using only relevant read rights on database access.
+
+In the second risk, patient data in the OMOP database gets deleted or modified by a bug in the ETL-Process. 
+The severity of this risk is high because the correctness of the patient data is crucial and the data in the database in will not be checked on its correctness once it is inserted.  
+The likelihood of this happening is high because this processes task is to translate the data from CSV files to an OMOP Database, bugs and errors in the implementation are possible.
+Therefore the process needs to be tested to ensure the correctness of the implementation.
+
+In the third risk, patient data in the OMOP database gets deleted or modified by a bug in the decubitus prediction back-end. 
+The severity of this risk is high because the correctness of the patient data is crucial and the data in the database will not be checked on its correctness once it is inserted.  
+The likelihood of this happening is low because the back-end never needs to write into the OMOP database and therefore the possibility of changing the data can be minimized by using only relevant read rights on database access.
+
+In the fourth risk, data of the decubitus prediction gets deleted or modified by a bug in the front-end.
+The severity of this risk is medium because the correctness of the data is crucial to the functionality of the software, but the software is not crucial to the workflow in a hospital.
+The likelihood of this happening is medium because the front-end is responsible for the correct display of the information. Therefore unwanted modification of the data is possible and must be excluded by testing.
+The likelihood of data deletion is low because the front-end never needs to write on the data and therefore the possibility of deletion can be minimized by using only relevant read rights on access.
+
+In the fifth risk, data of the decubitus prediction gets deleted or modified by a bug in the ETL-Process.
+The severity of this risk is medium because the correctness of the data is crucial to the functionality of the software, but the software is not crucial to the workflow in a hospital.
+The likelihood of this happening is low because the ETL-Process is independent of the decubitus detection and only severe bugs or errors would lead to data deletion/modification in an completely separate database.
+
+In the sixth risk, data of the decubitus prediction gets deleted or modified by a bug in the decubitus prediction back-end.
+The severity of this risk is medium  because the correctness of the data is crucial to the functionality of the software, but the software is not crucial to the workflow in a hospital.
+The likelihood of this happening is high because the prediction is generated in the back-end and errors are possible. 
+Therefore testing and evaluation of the prediction is needed.
+
+In the seventh risk, the front-end and thus the data on decubitus prediction is not available due to an attack overloading the providing back-end. 
+The severity of this risk is low  because the availability of this service is not crucial to the workflow in a hospital.
+This type of attack is one of the easiest ways to prevent the software's functionality, nevertheless, the likelihood is classified as low  because the front-end will only be available within the hospital's intranet. 
+Therefore an attacker would be required to act inside a controlled network where he would easily be spotted and the attack could be ended.
+
+In the eighth risk, an unauthorized person tries to manipulate/delete data via the front-end.
+The severity of this risk is high  because the correctness of the data is crucial and deliberate modification could lead to critical endangerment of patients.
+The likelihood is medium due to the fact that patient data front-ends are an easy target to manipulate the displayed data.
+Therefore the access to the front-end needs to be protected by a password authentication.
+Further, the front-end only provides read access on the displayed information and therefore no data in the database can be changed. 
+Manipulations on the displayment of the data can be reverted by reloading the page.
+
+In the ninth risk, an unauthorized person tries to access patient data via the front-end.
+The severity of this risk is high  because patient data is highly confidential.
+The likelihood is medium due to the fact that patient data front-ends are the first target on acquirement of patient data.
+Therefore the access to the front-end needs to be protected by a password authentication.
+Further, the front-end only provides selected patient data, e.g. the name, age, possibility of developing a decubitus and the top ten clinical findings leading to the decubitus prediction.
+
+In the tenth risk, a patient gets erroneous treated to prevent the development of a decubitus.
+The severity of this risk is medium due to the possibility of medicamental treatment leading to unnecessarily side effects. However, drug administration should always be medically questioned.
+In addition, further measures, such as frequent repositioning, do not lead to any far-reaching impairment of the patient.
+The risk of an erroneously treatment only based on the software is possible but, as emphasized, the software should only be used as a guide, including verifying the prediction using the top ten clinical findings leading to the prediction. Therefore the likelihood is medium.
+
+In the eleventh risk, a patient gets erroneously not treated leading to the development of a decubitus.
+The severity of this risk is high due to the far-reaching impairment of the patient.
+The likelihood is medium as the risk of a faulty refraining from treatment only based on the software is possible but, as emphasized, the software should only be used as a guide and the risk assessment should remain in the doctor's responsibility.
