@@ -63,7 +63,7 @@ if __name__ == '__main__':
         importance_d = {i: v for i, v in enumerate(importance)}
 
         # select most important reasons
-        top = sorted(importance_d, key=lambda x: abs(importance_d[x]), reverse=True)[:NUMBER_OF_REASONS]
+        top = sorted(importance_d, key=lambda x: abs(importance_d[x]), reverse=True)
 
         # get additional patient data
         p_data = omop_db.get_patient_data(pid)
@@ -77,10 +77,10 @@ if __name__ == '__main__':
                       VALUES ('{pid}', '{prediction}', '{p_data["gender"]}', '{p_data["birthday"]}', '{p_data["zip"]}', '{p_data["city"]}')
                       RETURNING '' """)
 
+        reason_count = 0
         for reason_id in top:
             reason_text = name_lut[reason_id].replace("'", "`")  # get name of clinical finding and escape single quotes
             reason_value = importance_d[reason_id]
-
 
             if domain_lut[reason_id] == "Measurement":
                 reason = f'"{reason_text}" should be {"lower" if reason_value < 0 else "higher"}'
@@ -106,6 +106,11 @@ if __name__ == '__main__':
             result_db(f"""INSERT INTO results.reasons (patient_id, reason) 
                           VALUES ('{pid}', '{reason}')
                           RETURNING '' """)
+
+            # stop after enough reasons are stored
+            reason_count += 1
+            if reason_count >= NUMBER_OF_REASONS:
+                break
 
         # make patients results persistent
         result_db.commit()

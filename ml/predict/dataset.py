@@ -208,7 +208,13 @@ class NewestOMOP:
 
 if __name__ == '__main__':
     db = RESULT_DB()
-    print(db.conn)
-    print(db('SELECT * FROM results.PATIENT'))
+    res = db("""select count(reason) as cnt, reason
+                from results.patient 
+                p join results.reasons r 
+                on p.patient_id=r.patient_id 
+                where prediction=True 
+                group by reason
+                order by cnt desc""")
 
-    dss = NewestOMOP("../output/dataset_pos_f5/disease_lut.pkl")
+    for r in res:
+        print(r[0], r[1])
