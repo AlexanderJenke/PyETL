@@ -96,8 +96,9 @@ def patient_page():
         global db_port
         global db_user
         global db_port
-        conn = DB(host=host, port=db_port, user=db_user, password=db_pw) 
-        # data = conn.get_patients()
+        conn = DB(host=db_host, port=db_port, user=db_user, password=db_pw) 
+        data = conn.get_patients_with_reasons()
+    print(data)
     return render_template("patient.html", data=data)
 
 @app.route("/dbconfig", methods = ["GET"])

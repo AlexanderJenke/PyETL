@@ -79,11 +79,11 @@
 		<tbody>
 			{% for row in data %}
 			<tr id="{{row}}" 
-	       {% if data[row][2] %} class="table-danger" {% else %} style="background-color:#eeeeee" {% endif %} onclick="togglePatient('row{{row}}')"> 
+	       {% if data[row][1] %} class="table-danger" {% else %} style="background-color:#eeeeee" {% endif %} onclick="togglePatient('row{{row}}')"> 
 				<td>{{row}}</td> 
 				<td>{{data[row][0]}}</td>
 			</tr>
-			{% if data[row][2] %}
+			{% if data[row][1] %}
 			<!--tr id="row{{row}}" class="collapse" style="background-color:#eeeeee"-->
 			<tr id="{{row}}.5"  style="background-color:#eeeeee;">
 				<td colspan="2" style="margin-top:0px;margin-bottom:0px;padding-top:0px;padding-bottom:0px;">

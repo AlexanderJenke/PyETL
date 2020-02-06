@@ -13,7 +13,7 @@ class DB:
         data = {}
         for row in self.cursor.fetchall():
             if row[0] not in data:
-                data[row[0]] = (row[1], row[2], [row[3]])
-            else:
+                data[row[0]] = (row[1], row[2], [])
+            if not (row[3] == None):
                 data[row[0]][2].append(row[3])
         return data
