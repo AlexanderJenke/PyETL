@@ -39,14 +39,25 @@ class OMOP_DB(DB_Connector):
         gender, year_of_birth, month_of_birth, location_id = self.__call__(f"""SELECT gender_source_value, year_of_birth, month_of_birth , location_id
                                                                   FROM {DATABASE_NAME}.person
                                                                   WHERE person_id='{pid}'""")[0]
+
         plz, city = self.__call__(f"""SELECT zip, city 
                                       FROM {DATABASE_NAME}.location
                                       WHERE location_id='{location_id}'""")[0]
 
+        care_site_id = self.__call__(f"""SELECT care_site_id
+                                         FROM {DATABASE_NAME}.visit_occurrence
+                                         WHERE person_id='{pid}'
+                                         ORDER BY visit_start_date ASC""")[-1][0]
+
+        fab = self.__call__(f"""SELECT care_site_name 
+                                FROM {DATABASE_NAME}.care_site 
+                                WHERE care_site_id='{care_site_id}'""")[0][0]
+
         return {"gender": gender,
                 "zip": plz,
                 "city": city,
-                "birthday": f"{str(month_of_birth).zfill(2)}.{year_of_birth}"}
+                "birthday": f"{str(month_of_birth).zfill(2)}.{year_of_birth}",
+                "fab": fab}
 
 
 class RESULT_DB(DB_Connector):

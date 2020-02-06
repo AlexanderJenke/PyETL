@@ -68,9 +68,9 @@ if __name__ == '__main__':
         p_data = omop_db.get_patient_data(pid)
 
         # store results in database
-        result_db(f"""INSERT INTO results.patient (patient_id, prediction, gender, birthday, zip, city, timestamp) 
-                      VALUES ('{pid}', '{prediction}', '{p_data["gender"]}', 
-                      '{p_data["birthday"]}', '{p_data["zip"]}', '{p_data["city"]}', '{datetime.datetime.today()}')
+        result_db(f"""INSERT INTO results.patient (patient_id, prediction, gender, birthday, zip, city, timestamp, fab) 
+                      VALUES ('{pid}', '{prediction}', '{p_data["gender"]}', '{p_data["birthday"]}', '{p_data["zip"]}', 
+                      '{p_data["city"]}', '{datetime.datetime.today()}', '{p_data['fab']}')
                       RETURNING '' """)
 
         # calculagte importance of each input feature

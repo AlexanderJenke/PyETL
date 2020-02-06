@@ -60,7 +60,7 @@ class PreparedOMOP:
 
 
 if __name__ == '__main__':
-    dss = PreparedOMOP("output/dataset_pos_f5/")
+    dss = PreparedOMOP("../output/dataset_pos_f5/")
 
     trainset, testset = dss.get_datasets()
 

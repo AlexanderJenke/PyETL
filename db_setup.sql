@@ -54,6 +54,7 @@ CREATE TABLE results.patient
     birthday character varying(50) COLLATE pg_catalog."default",
     zip character varying(50) COLLATE pg_catalog."default",
     city character varying(50) COLLATE pg_catalog."default",
+    fab character varying(50) COLLATE pg_catalog."default",
     "timestamp" timestamp without time zone,
     CONSTRAINT "PATIENT_pkey" PRIMARY KEY (patient_id)
 )
