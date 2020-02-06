@@ -35,18 +35,26 @@ def get_dummy_data():
 
 @app.route("/")
 def index():
+    """ returns the login page
+    """
     return render_template("login.html")
 
 @app.route("/js/<path:path>")
 def send_js(path):
+    """ allows to serve js files from the static folder
+    """
     return send_from_directory("js", path)
 
 @app.route("/css/<path:path>")
 def send_css(path):
+    """ allows to serve css files from the static folder
+    """
     return send_from_directory("css", path)
 
 @app.route("/login", methods= ["POST"])
 def login():
+    """authenticates the user, if username and password are correct
+    """
     username = request.form["username"]
     password = request.form["password"]
     if username == user and password == pw:
@@ -56,11 +64,15 @@ def login():
 
 @app.route("/logout", methods = ["GET"])
 def logout():
+    """ logs the user out
+    """
     session["logged_in"] = False
     return redirect(url_for("index"))
 
 @app.route("/patients", methods = ["GET"])
 def patient_page():
+    """ shows the main page, containing patient data
+    """
     if not session.get("logged_in"):
         return redirect(url_for("index"))
     global is_dummy_data
@@ -77,6 +89,8 @@ def patient_page():
 
 @app.route("/pdf", methods = ["GET"])
 def create_pdf():
+    """ prints patient data as PDF file
+    """
     if not session.get("logged_in"):
         return redirect(url_for("index"))
     pdf = FPDF()
@@ -152,6 +166,8 @@ def create_pdf():
     return response
 
 if __name__ == "__main__":
+    """ starts a flask server instance
+    """
     global is_dummy_data 
     global db_host 
     global db_port 

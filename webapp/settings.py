@@ -1,6 +1,8 @@
 from optparse import OptionParser
 
 def get_default_opts():
+    """ returns default options for the web application
+    """
     parser = OptionParser()
     parser.add_option("--dummy_data", dest="dummy_data", default=0)
 
