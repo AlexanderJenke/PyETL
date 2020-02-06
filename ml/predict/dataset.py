@@ -1,22 +1,14 @@
 import torch
-import pickle
-import os
-import numpy as np
 import psycopg2 as db
 from sys import stderr
 from datetime import date
 from tqdm import tqdm
 
-DATABASE_NAME = "synpuf_cdm"  # "p21_cdm"
+DATABASE_NAME = "p21_cdm"
 
 
 class DB_Connector:
-    def __init__(self,
-                 dbname='OHDSI',
-                 user='ohdsi_admin_user',
-                 host='localhost',
-                 port='5432',
-                 password='omop'):
+    def __init__(self, dbname, user, host, port, password):
         self.conn = db.connect(f"dbname='{dbname}' user='{user}' host='{host}' port='{port}' password='{password}'")
         self.cursor = self.conn.cursor()
 
@@ -34,9 +26,36 @@ class DB_Connector:
         self.cursor.execute(sql)
         return self.cursor.fetchall()
 
+    def commit(self):
+        self.conn.commit()
+
+
+class OMOP_DB(DB_Connector):
+    def __init__(self):
+        super(OMOP_DB, self).__init__(dbname='OHDSI', user='ohdsi_admin_user', host='localhost', port='5432',
+                                      password='omop')
+
+    def get_patient_data(self, pid):
+        gender, year_of_birth, month_of_birth, location_id = self.__call__(f"""SELECT gender_source_value, year_of_birth, month_of_birth , location_id
+                                                                  FROM {DATABASE_NAME}.person
+                                                                  WHERE person_id='{pid}'""")[0]
+        plz, city = self.__call__(f"""SELECT zip, city 
+                                      FROM {DATABASE_NAME}.location
+                                      WHERE location_id='{location_id}'""")[0]
+
+        return {"gender": gender,
+                "zip": plz,
+                "city": city,
+                "birthday": f"{str(month_of_birth).zfill(2)}.{year_of_birth}"}
+
+
+class RESULT_DB(DB_Connector):
+    def __init__(self):
+        super(RESULT_DB, self).__init__(dbname='ML_RESULTS', user='ml', host='localhost', port='5432', password='1234')
+
 
 class NewestOMOP:
-    def __init__(self, disease_lut_file):
+    def __init__(self, disease_lut):
 
         def get_table(tablename: str, colum_map: dict, condition=1):
             cols = ""
@@ -47,10 +66,9 @@ class NewestOMOP:
             colum_names = [v for k, v in sorted(colum_map.items(), key=lambda x: x[0])]
             return [{colum_names[i]: v for i, v in enumerate(row)} for row in rows]
 
-        with open(disease_lut_file, 'rb') as file:
-            self.disease_lut = pickle.load(file)
+        self.disease_lut = disease_lut
 
-        with DB_Connector() as omop:
+        with OMOP_DB() as omop:
 
             # prepare the alphabet
             alphabet_d = {}
@@ -89,7 +107,6 @@ class NewestOMOP:
             person_ids = omop(f"select distinct person_id from {DATABASE_NAME}.person")
 
             self.data = []
-
             for pid, *args in tqdm(person_ids, desc="Loding patient data"):
                 gender_concept_id, year_of_birth = omop(f"""SELECT gender_concept_id, year_of_birth 
                                                                       FROM {DATABASE_NAME}.person
@@ -182,12 +199,16 @@ class NewestOMOP:
 
     def __getitem__(self, item):
         return torch.tensor(self.data[item][0],
-                            dtype=torch.float32), torch.tensor(self.data[item][1],
-                                                               dtype=torch.float32)
+                            dtype=torch.long), torch.tensor(self.data[item][1],
+                                                            dtype=torch.float32)
 
     def __len__(self):
         return len(self.data)
 
 
 if __name__ == '__main__':
+    db = RESULT_DB()
+    print(db.conn)
+    print(db('SELECT * FROM results.PATIENT'))
+
     dss = NewestOMOP("../output/dataset_pos_f5/disease_lut.pkl")
