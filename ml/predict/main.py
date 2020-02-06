@@ -47,16 +47,31 @@ if __name__ == '__main__':
         param.requires_grad = False
 
     # generate prediction for every patient
-    for patient in tqdm(omop_ds, desc="calculate decubitus risk"):
+    for patient in tqdm(torch.utils.data.DataLoader(omop_ds, num_workers=8, batch_size=1),
+                        desc="calculate decubitus risk"):
 
         # prepare data
-        pid, features = patient
-        features = features.to(device)
+        pids, features = patient
+        pid = pids[0]
+        features = features[0].to(device)
         features.requires_grad = True
 
         # calculate prediction
         output = model(features.view(1, -1))
         prediction = output[0, 1].item() > threshold
+
+        # clear old data from database
+        result_db(f"DELETE FROM results.patient  WHERE patient_id='{pid}' RETURNING ''")
+        result_db(f"DELETE FROM results.reason  WHERE patient_id='{pid}' RETURNING ''")
+
+        # get additional patient data
+        p_data = omop_db.get_patient_data(pid)
+
+        # store results in database
+        result_db(f"""INSERT INTO results.patient (patient_id, prediction, gender, birthday, zip, city, timestamp) 
+                      VALUES ('{pid}', '{prediction}', '{p_data["gender"]}', 
+                      '{p_data["birthday"]}', '{p_data["zip"]}', '{p_data["city"]}', '{datetime.datetime.today()}')
+                      RETURNING '' """)
 
         # calculagte importance of each input feature
         output.backward(torch.tensor([[-1.0, 1.0]]))
@@ -66,24 +81,13 @@ if __name__ == '__main__':
         # select most important reasons
         top = sorted(importance_d, key=lambda x: abs(importance_d[x]), reverse=True)
 
-        # get additional patient data
-        p_data = omop_db.get_patient_data(pid)
-
-        # clear old data from database
-        result_db(f"DELETE FROM results.patient  WHERE patient_id='{pid}' RETURNING ''")
-        result_db(f"DELETE FROM results.reason  WHERE patient_id='{pid}' RETURNING ''")
-
-        # store results in database
-        result_db(f"""INSERT INTO results.patient (patient_id, prediction, gender, birthday, zip, city, timestamp) 
-                      VALUES ('{pid}', '{prediction}', '{p_data["gender"]}', 
-                      '{p_data["birthday"]}', '{p_data["zip"]}', '{p_data["city"]}', '{datetime.datetime.today()}')
-                      RETURNING '' """)
-
         reason_count = 0
         for reason_id in top:
-            reason_text = name_lut[reason_id].replace("'", "`")  # get name of clinical finding and escape single quotes
+            # get name of clinical finding and escape single quotes
+            reason_text = name_lut[reason_id].replace("'", "`")
             reason_value = importance_d[reason_id]
 
+            # format reason according to domain id
             if domain_lut[reason_id] == "Measurement":
                 reason = f'"{reason_text}" should be {"lower" if reason_value < 0 else "higher"}'
 
@@ -105,6 +109,7 @@ if __name__ == '__main__':
             else:
                 reason = f'{reason_text}'
 
+            # add reason to database
             result_db(f"""INSERT INTO results.reason (patient_id, reason) 
                           VALUES ('{pid}', '{reason}')
                           RETURNING '' """)
@@ -114,5 +119,5 @@ if __name__ == '__main__':
             if reason_count >= NUMBER_OF_REASONS:
                 break
 
-        # make patients results persistent
+        # make the patient's prediction & results persistent
         result_db.commit()

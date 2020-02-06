@@ -75,7 +75,7 @@ GRANT ALL ON TABLE results.patient TO ml_group;
 CREATE TABLE results.reason
 (
     patient_id bigint NOT NULL,
-    reason character varying(256) COLLATE pg_catalog."default",
+    reason character varying(512) COLLATE pg_catalog."default",
     reason_id bigint NOT NULL GENERATED ALWAYS AS IDENTITY ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 9223372036854775807 CACHE 1 ),
     CONSTRAINT "REASONS_pkey" PRIMARY KEY (reason_id)
 )
