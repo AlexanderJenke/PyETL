@@ -66,10 +66,10 @@ function sort_timestamp() {
 		list.push(rows[i]);
 	}
 	list = list.sort(function(a,b) {
-        	var parts = a.cells[3].innerText.split("/");
-		var date = new Date(parts[2], parts[0], parts[1])
-		parts = b.cells[3].innerText.split("/");
-		var date2 = new Date(parts[2], parts[0], parts[1])
+        	var parts = a.cells[3].innerText.split(".");
+		var date = new Date(parts[2], parts[1], parts[0])
+		parts = b.cells[3].innerText.split(".");
+		var date2 = new Date(parts[2], parts[1], parts[0])
 		return date > date2 ? -1 : date2 > date ? 1 : 0;
 		});
 	console.log(list)
@@ -85,6 +85,33 @@ function sort_timestamp() {
 	}
 }
 
+function sort_bday() {
+	
+	var table = document.getElementById("table");
+	var rows = table.rows;
+	var list = [];
+	for (var i = 1; i < rows.length; i+= 2) {
+		list.push(rows[i]);
+	}
+	list = list.sort(function(a,b) {
+        	var parts = a.cells[1].innerText.split(".");
+		var date = new Date(parts[1], parts[0], "1")
+		parts = b.cells[1].innerText.split(".");
+		var date2 = new Date(parts[1], parts[0], "1")
+		return date > date2 ? -1 : date2 > date ? 1 : 0;
+		});
+	console.log(list)
+  
+
+	for (var i = 0; i < list.length; i++) {
+		var x = list[list.length - i - 1];
+		var id = x.id;
+		var id2 = id + ".5";
+		y = document.getElementById(id2);
+		x.parentNode.insertBefore(y, rows[1]);
+		x.parentNode.insertBefore(x, rows[1]);
+	}
+}
 
 function sort_fab() {
 	
@@ -157,6 +184,8 @@ function filterTableById() {
             }
     }
 }
+
+
 
 function openDialog() {
     var dialog = document.getElementById("dialog");

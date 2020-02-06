@@ -66,12 +66,22 @@ def login():
         return redirect(url_for("patient_page"))
     return redirect(url_for("index"))
 
+
+
 @app.route("/logout", methods = ["GET"])
 def logout():
     """ logs the user out
     """
     session["logged_in"] = False
     return redirect(url_for("index"))
+
+@app.route("/imprint", methods = ["GET"])
+def imprint_piage():
+    """ shows the imprint page
+    """
+    if not session.get("logged_in"):
+        return redirect(url_for("index"))
+    return render_template("imprint.html")
 
 @app.route("/patients", methods = ["GET"])
 def patient_page():
@@ -91,7 +101,6 @@ def patient_page():
         data = conn.get_patients_with_reasons()
     else:
         data = get_dummy_data()
-    print(data[0])
     return render_template("patient.html", data=data)
 
 @app.route("/pdf", methods = ["GET"])

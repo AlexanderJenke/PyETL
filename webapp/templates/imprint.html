@@ -15,7 +15,8 @@
   }
   </style>
 </head>
-<body>
+<body style="padding-top:130px;">
+
 	
 
 
@@ -34,13 +35,10 @@
         <a class="nav-link" href="pdf">Export PDF</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" href="config">Config</a>
-      </li>
-      <li class="nav-item" style="display:none">
-        <a class="nav-link" href="csv">CSV Files</a>
-      </li>
-      <li class="nav-item">
         <a class="nav-link" href="patients">Patient Data</a>
+      </li> 
+      <li class="nav-item">
+        <a class="nav-link" href="imprint">Imprint</a>
       </li>
       <li class="nav-item">
         <a class="nav-link" href="logout">Logout</a>
@@ -50,38 +48,36 @@
 </nav>
 
 <div class="container" style="margin-top:30px">
-	<div class="row">
-		<div class="col-sm-4"></div>
-		<div class="col-sm-4 text-center">
-			<h2>Configuration</h1>
-			<form action="cronconfig" method="GET" style="display:none">
-				<h4>Edit cron job configuration</h4>
-				<input class="form-control" type="text" name="interval" value="{{interval}}" placeholder="example: * * * * *"  style="margin:5px"/>
-				<p/>
-				<input class="btn btn-primary" type="submit" value="Submit"/>
-			</form>
-			<p/>
-
-			<form action="run" style="display:none">	
-				<h4>Run ETL job manually</h2>
-			<p/>
-				<input class="btn btn-primary" type= "submit" value="Run!"/>
-			</form>	
-			<form action="dbconfig" method="GET">
-				<h4>Edit database configuration</h4>
-				<input class="form-control" type="text" name="host" value="{{host}}" placeholder="db host" style="margin:5px"/>
-				<input class="form-control" type="text" name="port" value="{{port}}" placeholder="db port" style="margin:5px"/>
-				<p/>
-				<input class="btn btn-primary" type="submit" value="Submit"/>
-			</form>
-			<form action="csvdirconfig" style="display:none">
-				<h4>CSV location</h4>
-				<input class="form-control" type="text" name="dir" value="{{location}}" placeholder="directory of csv files" style="margin:5px">
-				<input class="btn btn-primary" type="submit" value="Submit"/>
-			</form>
+	<div class="row" style="margin-bottom:100px">
+		<div class="col"></div>
+		<div class="col">
+		<h1>Imprint</h1>
 		</div>
-		
-		<div class="col-sm-4"></div>
-</div>
-	</body>
+		<div class="col"></div>
+	</div>
+	<div class="row" style="margin-bottom:100px">
+		<div class="col"></div>
+		<div class="col">
+			<span >Name: Alex Jenke</span></br>
+			<span>E-Mail: alexander.jenke@tu-dresden.de</span>
+		</div>
+		<div class="col"></div>
+	</div>
+	<div class="row" style="margin-bottom:100px">
+		<div class="col"></div>
+		<div class="col">
+			<span >Name: Markus Fritzsche</span></br>
+			<span>E-Mail: markus.fritzsche1@mailbox.tu-dresden.de</span>
+		</div>
+		<div class="col"></div>
+	</div>
+
+	<div class="row" style="margin-bottom:100px">
+		<div class="col"></div>
+		<div class="col">
+			<span >In cooperation with TU Dresden.</span></br>
+		</div>
+		<div class="col"></div>
+	</div>
+</body>
 </html>

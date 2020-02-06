@@ -32,6 +32,9 @@
       </li>
       <li class="nav-item">
         <a class="nav-link" href="patients">Patient Data</a>
+      </li> 
+      <li class="nav-item">
+        <a class="nav-link" href="imprint">Imprint</a>
       </li>
       <li class="nav-item">
         <a class="nav-link" href="logout">Logout</a>
@@ -44,6 +47,7 @@
 	<input id ="idFilter" type="text" class="form-control" placeholder="Filter table by patient ID" onkeyup="filterTableById()" style="margin-bottom:12px"/>
 	<button class="btn btn-primary" onclick="sortTable()" style="margin-bottom:20px">Sort rows by color</button>
 	<button class="btn btn-primary" onclick="sortBack2()" style="margin-bottom:20px">Sort rows by ID</button>
+	<button class="btn btn-primary" onclick="sort_bday()" style="margin-bottom:20px">Sort rows by birthday</button>
 	<button class="btn btn-primary" onclick="sort_timestamp()" style="margin-bottom:20px">Sort rows by timestamp</button>
 	<button class="btn btn-primary" onclick="sort_fab()" style="margin-bottom:20px">Sort rows by care site</button>
 	<button class="btn" data-toggle="modal" data-target="#myModal" style="margin-bottom:20px;float:right;"><i class="fa fa-question-circle fa-2x"></i></button>
