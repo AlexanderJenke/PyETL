@@ -3,6 +3,7 @@ import pickle
 import sys
 import os
 from tqdm import tqdm
+import datetime
 
 sys.path.append(os.pardir)
 import model as m
@@ -73,8 +74,9 @@ if __name__ == '__main__':
         result_db(f"DELETE FROM results.reasons  WHERE patient_id='{pid}' RETURNING ''")
 
         # store results in database
-        result_db(f"""INSERT INTO results.patient (patient_id, prediction, gender, birthday, zip, city) 
-                      VALUES ('{pid}', '{prediction}', '{p_data["gender"]}', '{p_data["birthday"]}', '{p_data["zip"]}', '{p_data["city"]}')
+        result_db(f"""INSERT INTO results.patient (patient_id, prediction, gender, birthday, zip, city, timestamp) 
+                      VALUES ('{pid}', '{prediction}', '{p_data["gender"]}', 
+                      '{p_data["birthday"]}', '{p_data["zip"]}', '{p_data["city"]}', '{datetime.datetime.today()}')
                       RETURNING '' """)
 
         reason_count = 0
