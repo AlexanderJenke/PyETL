@@ -1,5 +1,5 @@
 import torch
-from torch.optim import SGD, AdamW, Adam
+from torch.optim import AdamW
 from torch.optim.lr_scheduler import OneCycleLR, StepLR
 import torch.nn as nn
 import torch.nn.functional as F
@@ -9,7 +9,6 @@ import numpy as np
 import sys
 import os
 import datetime
-import math
 
 from dataset import PreparedOMOP
 
@@ -29,6 +28,7 @@ name += f"__{datetime.datetime.today().strftime('%d%m%Y_%H%M%S')}"
 
 
 def f1_score(input: torch.tensor, target: torch.tensor):
+    """ calculate F1-Score on input and target """
     pred = input  # F.hardtanh((input - 0.5).pow(-1), min_val=0, max_val=1)
     if not (pred.min() >= 0 and pred.max() <= 1):
         print(pred.min(), pred.max(), input)
@@ -49,95 +49,86 @@ def f1_score(input: torch.tensor, target: torch.tensor):
     return f1, p, r, double_f1
 
 
-class wMSELoss:
-    def __init__(self, weight):
-        self.weight = weight
-
-    def __call__(self, pred: torch.tensor, target: torch.tensor):
-        p_w = target * self.weight
-        n_w = (target + 1) % 2 * (1 - self.weight)
-        w = p_w + n_w
-        lps = (pred - target).pow(2) * w
-        return lps.mean()
-
-
-def wl1(input, target, w=0.998):
-    input = input.view(-1)
-    target = target.view(-1)
-    return ((input - target).abs() * (target * w - (target - 1) * (1 - w))).mean()
-
-
-def wmse(input, target, w=0.998, p=2):
-    input = input.view(-1)
-    target = target.view(-1)
-    return ((input - target).pow(p) * (target * w - (target - 1) * (1 - w))).mean()
-
-
 if __name__ == '__main__':
+    """ train a nn to predict decubitus """
+
+    # define device to calculate on [cpu, cuda]
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
+    # load datasets
     dss = PreparedOMOP("../output/dataset_pos_f5/")
     trainset, testset = dss.get_datasets()
     trainloader = DataLoader(trainset, batch_size=int(len(trainset) * BS), shuffle=True, pin_memory=True,
                              num_workers=8)
     testloader = DataLoader(testset, batch_size=len(testset), shuffle=True, pin_memory=True, num_workers=0)
 
+    # init model
     i = len(dss.disease_lut)
     print(f"N_features {i}")
     model = m.SVM(i).to(device)
-    # model = m.FC_N_FC(i, i).to(device)
-    # model = m.FC_FC(i, 100).to(device)
 
-    # optim = SGD(model.parameters(), lr=MAX_LR, momentum=0.9, weight_decay=1e-7)
+    # init optimizer and learn rate scheduler
     optim = AdamW(model.parameters(), lr=MAX_LR)
-    # lr_sched = OneCycleLR(optim, max_lr=MAX_LR, epochs=N_EPOCHS, steps_per_epoch=len(trainloader))
     lr_sched = StepLR(optim, step_size=5000, gamma=0.1)
 
+    # calculate positive to negative label ratio
     w = trainset.n_pos() / len(trainset)
     w *= fw
     print(f"w: {w}")
-    loss_CEL = nn.CrossEntropyLoss(weight=torch.tensor([w, 1-w]))
-    # loss_wMSE = wMSELoss(weight=w)
-    # loss_MSE = nn.MSELoss()
-    # loss_BCE = nn.BCELoss()
 
+    # init CrossEntropyLoss with the calculated ratio
+    loss_CEL = nn.CrossEntropyLoss(weight=torch.tensor([w, 1-w]))
+
+    # initialize tensorboardX log to visualize the training
     log = tensorboardX.SummaryWriter(f"runs/{name}")
 
+    # train multiple epochs
     for epoch in range(N_EPOCHS):
         print(epoch)
+
+        # TRAINING
+        # prepare variables to collect data
         mean_loss = []
         preds_cat = torch.empty(0)
         labels_cat = torch.empty(0)
         out_cat = torch.empty(0)
+
+        # iterate over all train samples (multiple samples are bundled into batches)
         for batch in trainloader:
+            # prepare batch data
             features, labels_cpu = batch
             features = features.to(device)
             labels = labels_cpu.to(device)
 
+            # calculate prediction using the model
             features = F.dropout(features, p=p)
             output = model(features)
             output = (output + 1) / 2
-            # output = F.softmax(output, dim=1)
 
+            # store data for later scoring (f1 score, number of declared risks ...)
             preds_cat = torch.cat([preds_cat, output.detach().cpu().argmax(dim=1).float().view(-1)])
             labels_cat = torch.cat([labels_cat, labels_cpu.float().view(-1)])
             out_cat = torch.cat([out_cat, output[:, 1].detach().cpu().view(-1)])
 
+            # print debuging output if model parameters crash into nan (caused by over-/underflowing floats)
             if torch.isnan(output).int().sum():
                 print(list(model.parameters()))
 
+            # calculate loss
             loss = 0.0
             loss += loss_CEL(output, labels.view(-1).long())
-            # loss += wl1(output[:, 1], labels, w=1.0-w) * 0.5
-            # loss += loss_wMSE(output, labels)
-            # loss += loss_BCE(output, labels)
-            # loss += loss_MSE(output, labels)
 
+            # save loss to later log the loss value
             mean_loss.append(loss.item())
+
+            # backpropagate loss and make a step to improve the model
             loss.backward()
             optim.step()
+
+        # trigger a step in the learn rate scheduler to adapt the learnrate
         lr_sched.step()
 
+        # calculate and log scores
         mean_f = -(out_cat * (labels_cat - 1)).mean()
         mean_t = (out_cat * labels_cat).mean()
         f1_t, p_t, r_t, df1_t = f1_score(preds_cat, labels_cat)
@@ -147,22 +138,29 @@ if __name__ == '__main__':
               f"N_pos {preds_cat.sum().item():5.0f}, "
               f"L1 {(preds_cat-labels_cat).abs().mean()}, loss {np.mean(mean_loss)}")
 
+        # EVALUATION
+        # prepare variables to collect data
         preds_cat = torch.empty(0)
         labels_cat = torch.empty(0)
         out_cat = torch.empty(0)
+
+        # iterate over all test samples (all samples are bundled into on batch)
         for batch in testloader:
+            # prepare batch data
             features, labels_cpu = batch
             features = features.to(device)
             labels = labels_cpu.to(device)
 
+            # calculate prediction using the model
             output = model(features)
             output = (output + 1) / 2
-            # output = F.softmax(output, dim=1)
 
+            # store data for later scoring (f1 score, number of declared risks ...)
             preds_cat = torch.cat([preds_cat, output.detach().cpu().argmax(dim=1).float().view(-1)])
             labels_cat = torch.cat([labels_cat, labels_cpu.float().view(-1)])
             out_cat = torch.cat([out_cat, output[:, 1].detach().cpu().view(-1)])
 
+        # calculate and log scores
         mean_f = -(out_cat * (labels_cat - 1)).mean()
         mean_t = (out_cat * labels_cat).mean()
         f1, p, r, df1 = f1_score(preds_cat, labels_cat)
@@ -179,5 +177,6 @@ if __name__ == '__main__':
         log.add_scalars("F1-Score", {"test": f1, "train": f1_t}, global_step=epoch)
         log.add_scalars("Double F1-Score", {"test": df1, "train": df1_t}, global_step=epoch)
 
+    # save trained model
     model.save(f"../output/models/{name}.pt")
     log.close()

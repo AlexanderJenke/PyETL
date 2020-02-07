@@ -4,153 +4,38 @@ import torch.nn.functional as F
 
 
 class SaveLoad(nn.Module):
+    """class implementing save and load functions for other models to inherit """
     def save(self, path):
+        """saves the models state_dict
+        :param path: path to generated file
+        """
         torch.save(self.state_dict(), path)
 
     def load(self, path, device='cpu'):
+        """ loads a state dict into a model
+        :param path: file containing state dict
+        :param device: device the model is on
+        """
         # resize model according to file
         state_dict = torch.load(path, map_location=device)
         for key in state_dict:
+            # automatically resize the models layer according to the state dict
             if key.endswith("weight"):
                 self.__getattr__(key.split('.')[0]).__init__(state_dict[key].shape[1], state_dict[key].shape[0])
-                # print(key.split('.')[0], state_dict[key].shape)
 
-        # load params
+        # load params into the model
         self.load_state_dict(state_dict)
 
 
 class SVM(SaveLoad):
+    """ SVM for decubitus risk prediction
+    inherits save and load funktionality from SaveLoad class
+    """
     def __init__(self, input_size):
+        """ initialize the model"""
         super(SVM, self).__init__()
         self.fc = nn.Linear(input_size, 2)
 
     def forward(self, x):
+        """propagate data through the nn"""
         return F.softsign(self.fc(x))
-
-
-class Net(SaveLoad):
-    def __init__(self, input_size):
-        super(Net, self).__init__()
-
-        self.fc1 = nn.Linear(input_size, input_size * 2)
-        self.fc2 = nn.Linear(input_size * 2, input_size * 2)
-
-        self.fc3 = nn.Linear(input_size * 2, input_size * 2)
-        self.fc4 = nn.Linear(input_size * 2, input_size * 2)
-
-        self.dropout = nn.Dropout()
-
-        self.fc5 = nn.Linear(input_size * 2, input_size)
-        self.fc6 = nn.Linear(input_size, 2)
-
-    def forward(self, x):
-        x = F.leaky_relu(self.fc2(self.fc1(x)))
-        x = F.leaky_relu(self.fc4(self.fc3(x)))
-        x = self.dropout(x)
-        x = F.leaky_relu(self.fc6(self.fc5(x)))
-        return F.softsign(x)
-
-
-class Net_small(SaveLoad):
-    def __init__(self, input_size):
-        super(Net_small, self).__init__()
-
-        self.fc1 = nn.Linear(input_size, input_size // 2)
-        self.fc2 = nn.Linear(input_size // 2, input_size // 4)
-
-        self.fc3 = nn.Linear(input_size // 4, input_size // 8)
-        self.fc4 = nn.Linear(input_size // 8, input_size // 16)
-
-        self.dropout = nn.Dropout()
-
-        self.fc5 = nn.Linear(input_size // 16, input_size // 32)
-        self.fc6 = nn.Linear(input_size // 32, 1)
-
-    def forward(self, x):
-        x = F.leaky_relu(self.fc2(self.fc1(x)))
-        x = F.leaky_relu(self.fc4(self.fc3(x)))
-        x = self.dropout(x)
-        x = F.relu(self.fc6(self.fc5(x)))
-        return x
-
-
-class N_FC(SaveLoad):
-    def __init__(self, input_size, layers, activation=F.softsign):
-        super(N_FC, self).__init__()
-        self.activation = activation
-        self.layers = []
-        last_size = input_size
-
-        for blocks in layers:
-            block = []
-            for layer in blocks:
-                block.append(nn.Linear(last_size, layer))
-                last_size = layer
-            self.layers.append(block)
-
-    def parameters(self, recurse=True):
-
-        for blocks in self.layers:
-            for layer in blocks:
-                for name, param in layer.named_parameters(recurse=recurse):
-                    yield param
-
-    def forward(self, x):
-        for blocks in self.layers:
-            for layer in blocks:
-                x = layer(x)
-            x = self.activation(x)
-        return x
-
-
-class FC_N_FC(SaveLoad):
-    def __init__(self, input_size, n):
-        super(FC_N_FC, self).__init__()
-        self.fc1 = nn.Linear(input_size, n)
-        self.fc2 = nn.Linear(n, n)
-        self.fc3 = nn.Linear(n, 2)
-
-    def forward(self, x):
-        x = self.fc1(x)
-        x = F.leaky_relu(x)
-        x = self.fc2(x)
-        x = F.leaky_relu(x)
-        x = F.dropout(x)
-        x = self.fc3(x)
-        x = F.softsign(x)
-        return x
-
-class FC_FC(SaveLoad):
-    def __init__(self, input_size, n):
-        super(FC_FC, self).__init__()
-        self.fc1 = nn.Linear(input_size, n)
-        self.fc2 = nn.Linear(n, 2)
-
-    def forward(self, x):
-        x = self.fc1(x)
-        x = F.leaky_relu(x)
-        x = F.dropout(x)
-        x = self.fc2(x)
-        x = F.softsign(x)
-        return x
-
-
-class Classifier(SaveLoad):
-    def __init__(self, input_size):
-        super(Classifier, self).__init__()
-        self.fc1 = nn.Linear(input_size, 1000)
-        self.fc2 = nn.Linear(1000, 500)
-        self.fc3 = nn.Linear(500, 200)
-        self.fc4 = nn.Linear(200, 2)
-
-    def forward(self, x):
-        x = self.fc1(x)
-        x = F.leaky_relu(x)
-        x = self.fc2(x)
-        x = F.leaky_relu(x)
-        x = F.dropout(x)
-        x = self.fc3(x)
-        x = F.leaky_relu(x)
-        x = F.dropout(x)
-        x = self.fc4(x)
-        return F.softsign(x)

@@ -9,59 +9,81 @@ import concurrent.futures
 from tqdm import tqdm
 from shutil import rmtree
 
-OUTPUT_DIR = "output/dataset_pos_f3/"
-DATABASE_NAME = "p21_cdm"
-FUTURE_HORIZON = 3
-ONLY_POS = True
+OUTPUT_DIR = "output/dataset_pos_f5/"  # path where to save the generated data
+DATABASE_NAME = "p21_cdm"  # database to use
+FUTURE_HORIZON = 5  # number of future time steps to include into the label
+ONLY_POS = True  # only use patients who devellop a decubitus at least once within the recordings?
 
 
 class DB_Connector:
+    """ database connection to the omop cdm"""
     def __init__(self,
                  dbname='OHDSI',
                  user='ohdsi_admin_user',
                  host='localhost',
                  port='5432',
                  password='omop'):
+        """initialize the connector"""
         self.conn = db.connect(f"dbname='{dbname}' user='{user}' host='{host}' port='{port}' password='{password}'")
         self.cursors = []
         self._get_cursor_lock = threading.Lock()
 
     def __del__(self):
+        """ deconstruct the connector
+            close all cursors and the connection
+        """
         with self._get_cursor_lock:
             for cursor in self.cursors:
                 del cursor
         self.conn.close()
 
     def __enter__(self):
+        """ enable code wrapping with the with statement """
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        """ enable code wrapping with the with statement
+            deconstruct connection on exit
+        """
         self.__del__()
 
     class Cursor:
+        """ sub class containing cursor functionality to enable different threads to use their own cursor """
         def __init__(self, conn):
+            """ create new cursor"""
             self.conn = conn
             self.cursor = self.conn.cursor()
 
         def __call__(self, sql):
+            """ execute slq statement """
             self.cursor.execute(sql)
             return self.cursor.fetchall()
 
         def __enter__(self):
+            """ enable code wrapping with the with statement """
             return self
 
         def __exit__(self, exc_type, exc_val, exc_tb):
+            """ enable code wrapping with the with statement
+                deconstruct cursor on exit
+            """
             self.close()
 
         def __del__(self):
+            """ deconstruct cursor and close cursor"""
             self.close()
 
         def close(self):
+            """ close cursor """
             self.cursor.close()
 
     def get_cursor(self):
+        """ returns a new cursor
+            this is the point where threts get their own cursor
+        """
         c = self.Cursor(self.conn)
 
+        # keep track of all cursors
         with self._get_cursor_lock:
             self.cursors.append(c)
 
@@ -69,6 +91,10 @@ class DB_Connector:
 
 
 def get_table(tablename: str, colum_map: dict, condition=1):
+    """ helper function to get specific colums of a table
+        return a list of dicts containing colums content connected to the colums name
+        each dict represents a row in the database
+    """
     with omop.get_cursor() as cursor:
         cols = ""
         for col in sorted(colum_map.keys()):
@@ -80,7 +106,12 @@ def get_table(tablename: str, colum_map: dict, condition=1):
 
 
 def prepare_person(pid, *args):
+    """ prepares samples from the omop cdm
+        loads all data from one patient specified by the id
+        slices the patients timeline on every unique date, where new data was added
+    """
     with omop.get_cursor() as cursor:
+        # get basic patient data
         gender_concept_id, year_of_birth = cursor(f"""SELECT gender_concept_id, year_of_birth 
                                                       FROM {DATABASE_NAME}.person
                                                       WHERE person_id='{pid}'""")[-1]
@@ -118,6 +149,7 @@ def prepare_person(pid, *args):
 
         data = obserations + measurements + conditions + procedures
 
+        # prepare LUTs
         concept_ids = sorted(set([snomed_lut[str(row['id'])] for row in data]))
         concept_id_lut = {id: i for i, id in enumerate(concept_ids)}
         dates = sorted(set([row['date'] for row in data]))
@@ -129,6 +161,7 @@ def prepare_person(pid, *args):
         for row in data:
             concept_id = snomed_lut[str(row['id'])]
 
+            # if a entry does not contay a vaule ist is set to 1 to indicate the clinical finding is in the data
             if row['value'] is None:
                 value = 1.0
             else:
@@ -138,6 +171,8 @@ def prepare_person(pid, *args):
                     print(f"ERROR: {row['value']} can not be converted into float! \n{row}")
                     continue
 
+            # conditions with an end date are only set within the timespan
+            # everything else ist set from finding until the end of the patients records
             enddate = []
             if 'end_date' in row and row['end_date'] is not None:
                 enddate += [i for i in range(len(dates) - 1) if dates[i] <= row['end_date'] < dates[i + 1]]
@@ -146,19 +181,21 @@ def prepare_person(pid, *args):
 
         # patient data -> samples
         samples = ()
-        for i in range(len(dates) - FUTURE_HORIZON):
+        for i in range(len(dates) - FUTURE_HORIZON):  # slice the patients timeline into samples
             sample = {concept_ids[j]: r for j, r in enumerate(patient_data[:, i])}
             sample["age"] = age
             sample["female"] = int(gender_concept_id == 8532)
             sample["male"] = int(gender_concept_id == 8507)
-            # decubitus will be diagnosed newly next timestamp
+            # decubitus will be diagnosed newly next n timestamps (n=FUTURE_HORIZON)
             label = bool(set([concept_ids[j]
                               for j in range(len(concept_ids))
                               if patient_data[j, i] == 0 and patient_data[j, i + 1: i + FUTURE_HORIZON + 1].sum() != 0]
                              ) & labels)
+
+            # add sample to the patients data
             samples += (sample, label),
 
-        # save patient data
+        # save patient data to a file
         with open(os.path.join(OUTPUT_DIR,
                                "1" if sum([int(s[1]) for s in samples]) else "0",
                                f"{str(pid).zfill(6)}.pkl"),
@@ -166,35 +203,44 @@ def prepare_person(pid, *args):
             pickle.dump(samples, file)
 
 
-def split_set(pos_neg_ratio=0.1):
+def split_set(ratio=0.1):
+    """ splits the patients into a test and a train set
+    """
     negative = [f for f in os.listdir(os.path.join(OUTPUT_DIR, "0")) if f.endswith(".pkl")]
     positive = [f for f in os.listdir(os.path.join(OUTPUT_DIR, "1")) if f.endswith(".pkl")]
 
     if not ONLY_POS:
-        for f in negative[:int(len(negative) * pos_neg_ratio)]:
+        for f in negative[:int(len(negative) * ratio)]:
             os.rename(os.path.join(OUTPUT_DIR, "0", f), os.path.join(OUTPUT_DIR, "test", f))
-        for f in negative[int(len(negative) * pos_neg_ratio):]:
+        for f in negative[int(len(negative) * ratio):]:
             os.rename(os.path.join(OUTPUT_DIR, "0", f), os.path.join(OUTPUT_DIR, "train", f))
-    for f in positive[:int(len(positive) * pos_neg_ratio)]:
+    for f in positive[:int(len(positive) * ratio)]:
         os.rename(os.path.join(OUTPUT_DIR, "1", f), os.path.join(OUTPUT_DIR, "test", f))
-    for f in positive[int(len(positive) * pos_neg_ratio):]:
+    for f in positive[int(len(positive) * ratio):]:
         os.rename(os.path.join(OUTPUT_DIR, "1", f), os.path.join(OUTPUT_DIR, "train", f))
 
 
 def main():
+    """ main
+        prepares all patients contained in the database
+    """
+
+    # print warning if existent data will be replaced
     if os.path.isdir(OUTPUT_DIR):
         if input(f"WARNING: '{OUTPUT_DIR}' already exists!\n"
                  f"         Do you want to replace the data?\n"
                  f"         [Yes, No]:\n") == "Yes":
-            rmtree(OUTPUT_DIR)
+            rmtree(OUTPUT_DIR)  # remove existent data to overwrite it
         else:
             exit(1)
+    # prepare output folder structure
     os.mkdir(OUTPUT_DIR)
     os.mkdir(os.path.join(OUTPUT_DIR, "0"))
     os.mkdir(os.path.join(OUTPUT_DIR, "1"))
 
     global omop, alphabet_d, labels, snomed_lut
 
+    # get database connection
     omop = DB_Connector()
 
     with omop.get_cursor() as cursor:
@@ -254,6 +300,7 @@ def main():
 
     del omop
 
+    # split generated data into train & test set
     os.mkdir(os.path.join(OUTPUT_DIR, "train"))
     os.mkdir(os.path.join(OUTPUT_DIR, "test"))
     split_set()
