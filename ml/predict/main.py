@@ -61,8 +61,8 @@ if __name__ == '__main__':
         prediction = output[0, 1].item() > threshold
 
         # clear old data from database
-        result_db(f"DELETE FROM results.patient  WHERE patient_id='{pid}' RETURNING ''")
         result_db(f"DELETE FROM results.reason  WHERE patient_id='{pid}' RETURNING ''")
+        result_db(f"DELETE FROM results.patient  WHERE patient_id='{pid}' RETURNING ''")
 
         # get additional patient data
         p_data = omop_db.get_patient_data(pid)
