@@ -1,19 +1,59 @@
-\documentclass{scrreprt}
+\documentclass{article}
 
 \usepackage[utf8]{inputenc}
+\usepackage{fancyhdr}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage[headheight=3cm]{geometry}
 
-\author{Alex Jenke \& Markus Fritzsche}
-\title{Documentation}
+
+\title{\vspace{1.5cm}\\Documentation}
+\author{\\
+        \\
+        Concerning software: \hspace{0.5cm} PyETL \&  DecubiTection \hspace{0.7cm} \\
+        \\
+        Submitted by : \hspace{1.5cm} Alex Jenke, Markus Fritzsche \\
+        \\
+        Submitted on: \hspace{1.65cm} February 06 2020 \hspace{2.05cm} \vspace{1.5cm}}
+\date{}
+
+
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{\vspace{2cm} \includegraphics{images/logo2.png}\vspace{0.5cm} \\  }
+\lhead{\vspace{2cm} \includegraphics{images/logo.png} \vspace{0.5cm} \hrule Zentrum für Medizinische Informatik}
+\rfoot{\thepage}
+
+
+
 \begin{document}
+\pagenumbering{none}
 \maketitle
+\thispagestyle{fancy}
+\setcounter{tocdepth}{2}
+\tableofcontents
+\newpage
 
-\section{Riscs}
-\input{sections/riscs.tex}
-\section{Quality Management}
+\pagenumbering{arabic}
+\section{Description}
+\input{sections/description.tex}
+%\newpage
+
+\section{Risk Analysis}
+\input{sections/risks.tex}
+%\newpage
+
+\section{Quality Management} 
 \input{sections/quality.tex}
-\section{Software Lifecycle Processes}
+%\newpage
+
+\section{Software Life-cycle Processes}
 \input{sections/process.tex}
+%\newpage
+
 \section{Usability}
 \input{sections/usability}
 
+\section{Dependencies}
+\input{sections/dependency}
 \end{document}

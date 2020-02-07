@@ -1,37 +1,84 @@
 \subsection{Requirements}
-
+The following requirements for the software were identified:
 \begin{itemize}
-	\item For confidential reasons, a password for using the app is required
-	\item The ETL process converts the standardized CSV files correctly into the OMOP CDM
-	\item The ETL process can be scheduled through a cron job
-	\subitem The cron job can be modified over the frontend of the app
-	\subitem A ETL process can be triggered out of schedule over the frontend
-	\item The evaluation of potential decubitus patients is aimed to be as accurate as possible for us
-	\item The results of the evaluation can be illustrated inside the frontend of the app
-	\subitem Selected additional data of the patient is illustrated
-	\subitem Additional information can be showed, if desired
+    \item The software transforms CSV files containing standardized patient data according to §21 Paragraph 4 and 5 KHEntgG into an OMOP CDM.
+    \item The software can be configured to perform the transformation periodically.
+    \item The software provides a prediction based on patient data of the patients risk developing a pressure ulcer (decubitus).
+    \item The prediction on the risk of decubitus development can be verified on provided reasons leading to the classification.
+    \item The generated prediction can be displayed in a web browser.
+    \item The access to the patient data via the web browser is protected by a password authentication.  
 \end{itemize}
 
 \subsection{Tests}
+The sub-modules of the software are tested independently due to the fact they only interact via defined interfaces in form of database entries.
+Therefore only the correctness from one interface to another is tested.
+
+In addition, one complete run from CSV to front-end is performed to ensure the correct interaction via the interfaces.
 
 \subsubsection{ETL-Process}
+The different functions of the ETL-Process are tested by unit tests.
+Further, the complete sub-module is tested by inserting a set of CSV files into the OMOP CDM and checking the database content to contain the expected data.
 
-\begin{tabular}{|c|c|}
-	\hline
-	input & expected output \\
-	\hline
-	correct set of csv files as input & data is converted correctly \\
-	missing CSV file & error message appears \\
-	CSV file with wrong content & error message appears \\
-	\hline
-\end{tabular}
+\subsubsection{Decubitus Risk Prediction}
+The decubitus risk prediction is based on a neural network, therefore the prediction can only be tested on test data. 
+The F1-Score, recall, and precision are used to numerically evaluate the results.
+Further, the returned top ten clinical findings are evaluated via visual inspection of the results. 
 
-\subsubsection{Evaluation of Patients}
+\subsubsection{Front-End}
+The front-end was tested visually by displaying known data and checking the visualization for correctness.
 
-As we are using a deep learning approach, we split our data in two sets: the training data and the test data. As the names suggest, the training data is only for train our 
-network, which will then be evaluated using the test set. 
 
-\subsubsection{Frontend}
+\subsection{Change Management}
+Updates for the subsections of the software can be deployed independently.
+Therefore the change management for each segment needs to be analyzed separately.
+This enables the fast deployment of bug fixes because only the affected sub-module needs to be updated, tested and deployed. 
 
-Frontend tests are difficult, if not impossible. Therefore we can only test it by letting certain people evaluating it. 
+\subsubsection{ETL-Process}
+If the ETL-Process is updated it will be validated on test data.
+Afterward it can be deployed.
+The deployment simply consists of the replacement of affected Python files.
+This can easily be done by using a versioning system like git. 
+If a versioning system is used, the deployment only consists of the provider pushing the newest version and the customer pulling the newest version.
 
+However, it should be noted that data already entered in the OMOP CDM will not be updated retroactively.
+Meaning, erroneously data in the database can only be fixed by deleting affected entries and inserting it as a set of CVS files into the updated ETL-Process.
+
+\subsubsection{Decubitus Risk Prediction}
+The update routine of the decubitus risk prediction can be split into two different cases.
+
+In the first case, the update fixes a bug in the prediction pipeline. 
+A bug is detected and fixed in the code, followed by testing of the sub-module.
+Afterward the new version can be deployed similar to the ETL-Process.
+
+In the second case, the neural network (NN) is updated.
+Assuming the trainset is extended by new data the NN can be retrained on the new data.
+If the new network achieves better test results than the old version it can be deployed.
+For this purpose, the file that defines the NN is updated and deployed similar to the ETL-Process.
+
+
+\subsubsection{Front-End}
+If the front-end is updated, it will be validated through usability-tests\footnote{tests, where one or more developers validate the software through simply using it}, where the patient data is replaced with dummy data. 
+If these tests succeed, the sub-module can be deployed by replacing the contained Python, CSS, JavaScript and HTML files.
+As the front-end only requires reading access to the database, two instances of different versions can run separately. 
+Hence, if a newer version contains bugs or missing functionality, one can fall back to the previous version and report the issue to the developers.
+Therefore the front-end offers high availability. 
+
+
+
+%The purpose of our product is to predict potential decubitus patients with aid of patient specific medical records. In order to achieve a system of this capability, many steps are required.
+%We need to constantly convert data into the OMOP CDM, evaluate the data and illustrate the results on doctors or medical assistants, hence they are able to treat the patients correctly. 
+
+%\subsection{Development of an ETL Process}
+%The first step of the product is to convert our standardized data into the OMOP CDM. 
+%In order to achieve that, we write a Python framework, reading the data of the input CSV files, connect to the required database and saves the converted data.
+
+%\subsection{Evaluation of the data}
+%To achieve the best possible results, we focus on a deep learning approach, hence our system learns from real data, how likely it is that a patient suffers on decubitus. 
+%Secondarily we work on a pure statistically approach as base line.
+%If the second approach ends up more reliable, we discard the deep learning approach.
+%As training data, we use a set of medical records from dummy patients.
+%Unfortunately we don't have the opportunity to train on real patient data, as OHDSI don't offer real data of patients who actually suffered from decubitus. 
+
+%\subsection{Building the app}
+%We build a simple web python application for the use of our medical device.
+%This app is possible to schedule when the ETL process should restart, configure the database settings and illustrate the results of the patient evaluation. 

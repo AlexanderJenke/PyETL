@@ -1,18 +1,17 @@
-The purpose of our product is to predict potential decubitus patients with aid of patient specific medical records. In order to achieve a system of this capability, many 
-steps are required. We need to constantly convert data into the OMOP CDM, evaluate the data and illustrate the results on doctors or medical assistants, hence they are able 
-to treat the patients correctly. 
+The software is developed according to the waterfall model.
+\begin{itemize}
+\item In the first step the task was analyzed and requirements for the software were documented.
 
-\subsection{Development of an ETL Process}
-The first step of the product is to convert our standardized data into the OMOP CDM. In order to achieve that, we write a Python framework, reading 
-the data of the input CSV files, connect to the required database and saves the converted data.
+\item Secondly the software structure was designed. 
+In this step, the software was split into the three subsections: ETL-Process, Prediction-Pipeline, and front-end.
+Interfaces, in form of database structures, were defined. 
 
-\subsection{Evaluation of the data}
-To achieve the best possible results, we focus on a deep learning approach, hence our system learns from real data, how likely it is that a patient suffers on decubitus. Secondarily 
-we work on a pure statistically approach as base line. If the second approach ends up more reliable, we discard the deep learning approach. As training data, we use a set 
-of medical records from dummy patients. Unfortunately we don't have the opportunity to train on real patient data, as OHDSI don't offer real data of patients who actually suffered 
-from decubitus. 
+\item In the third step, the sub-modules were implemented separately.
 
-\subsection{Building the app}
-We build a simple web python application for the use of our medical device. This app is possible to schedule when the ETL process should restart, configure the database settings and illustrate 
-the results of the patient evaluation. 
- 
+\item In the fourth step, the sub-modules were firstly tested independently and afterward the complete pipeline was evaluated.
+
+\item The last step, the commissioning is prepared but not executed.
+
+\end{itemize}
+On completion of a step the fulfillment of the requirements of the preceding step were verified.
+On implementation the sub-modules were split into smaller tasks, which were implemented and tested on its own, followed by a system test verifying the correct operation of the task in the complete system. 
