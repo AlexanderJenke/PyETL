@@ -4,11 +4,6 @@ A webapplication, showing patient content
 ## Run
 Simply run:
 ```python3
-python3 main.py [PATH TO CSV DIRECTORY]
-```
-
-To set up a regular execution use:
-```python3
 python3 main.py
 ```
 
